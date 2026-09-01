@@ -1,12 +1,10 @@
 const bcrypt = require("bcrypt");
-const prisma = require('../config/prisma');;
+const prisma = require("../config/prisma");
 const { signToken, hashToken } = require("../utils/jwt");
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// POST /auth/login — no password here. This only checks the phone is a
-// known, approved, non-disabled user. The actual one-time code was
-// already generated and handed out by an Admin.
+// POST /auth/login
 async function login(req, res) {
   const { phone } = req.body;
   const user = await prisma.user.findUnique({ where: { phone } });
@@ -21,7 +19,7 @@ async function login(req, res) {
   return res.json({ message: "Enter the one-time code provided by your admin." });
 }
 
-// POST /auth/verify — checks the one-time code, marks it used, issues a JWT.
+// POST /auth/verify
 async function verify(req, res) {
   const { phone, code } = req.body;
 
@@ -47,7 +45,7 @@ async function verify(req, res) {
     return res.status(401).json({ error: "Invalid or expired code" });
   }
 
-  // Single-use: mark this code used immediately so it can never be replayed.
+  // Single-use: mark this code used
   await prisma.loginCode.update({
     where: { id: matched.id },
     data: { used: true },
@@ -68,7 +66,7 @@ async function verify(req, res) {
   });
 }
 
-// POST /auth/logout — deletes the current session row, revoking the token.
+// POST /auth/logout
 async function logout(req, res) {
   await prisma.session.deleteMany({
     where: { userId: req.user.id, tokenHash: req.tokenHash },
