@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 // connections in dev with hot-reload).
 const prisma = global.__dayLifePrisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") {
-  global.__dayLifePrisma = prisma;
+    global.__dayLifePrisma = prisma;
 }
 
 module.exports = prisma;
