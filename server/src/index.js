@@ -4,7 +4,7 @@ const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
 const { Server } = require("socket.io");
-
+const prisma = require('../config/prisma'); // ✅
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
 const chatRoutes = require("./routes/chat.routes");

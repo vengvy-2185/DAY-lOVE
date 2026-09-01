@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const prisma = require("../../prisma/schema.prisma");
+const prisma = require('../config/prisma'); // ✅
 const { supabase, BUCKET } = require("../config/supabase");
 
 const CUTOFF_MS = 24 * 60 * 60 * 1000; // 24 hours
