@@ -1,4 +1,4 @@
-const prisma = require("../prisma/client");
+const prisma = require("../../prisma/schema.prisma");
 const { verifyToken, hashToken } = require("../utils/jwt");
 
 // Verifies the JWT AND that a matching, unexpired session row still

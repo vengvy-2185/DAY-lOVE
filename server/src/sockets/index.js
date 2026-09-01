@@ -1,5 +1,5 @@
 const { verifyToken, hashToken } = require("../utils/jwt");
-const prisma = require("../prisma/client");
+const prisma = require("../../prisma/schema.prisma");
 
 // Tracks which userIds currently have at least one open socket, so we can
 // broadcast accurate online/offline status without hitting the DB per event.

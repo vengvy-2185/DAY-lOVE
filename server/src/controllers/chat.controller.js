@@ -1,4 +1,4 @@
-const prisma = require("../prisma/client");
+const prisma = require("../../prisma/schema.prisma");
 
 // GET /rooms
 async function listRooms(req, res) {

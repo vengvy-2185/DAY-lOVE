@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const prisma = require("../prisma/client");
+const prisma = require("../../prisma/schema.prisma");
 const { generateCode } = require("../utils/otp");
 
 const CODE_TTL_MINUTES = Number(process.env.LOGIN_CODE_TTL_MINUTES || 5);
