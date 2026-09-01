@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Day Life — Private Chat</title>
+<style>
+  :root{
+    --bg: #0a0d12;
+    --panel: #11151d;
+    --panel-2: #171c26;
+    --border: #232a38;
+    --text: #e7ebf3;
+    --text-dim: #8b93a7;
+    --accent: #5b7cfa;
+    --accent-dim: #3d5bd9;
+    --bubble-mine: #3450c9;
+    --bubble-theirs: #1a2030;
+    --danger: #e6577a;
+    --ok: #4fd48a;
+    --radius: 16px;
+    --font: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  @font-face{
+    font-family:"Manrope";
+    src: local("Manrope");
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    font-family: var(--font);
+    background: radial-gradient(1200px 800px at 15% -10%, #131a2b 0%, var(--bg) 55%);
+    color: var(--text);
+    overflow:hidden;
+  }
+  #app{ height:100vh; width:100vw; display:flex; }
+  button{ font-family:inherit; cursor:pointer; border:none; }
+  input, textarea{ font-family:inherit; }
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
+
+  /* ---------- Login ---------- */
+  .login-screen{
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .login-card{
+    width:100%; max-width:380px; background:var(--panel); border:1px solid var(--border);
+    border-radius:20px; padding:32px 28px;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.6);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:10px;
+    background: linear-gradient(135deg, var(--accent), #8aa2ff);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; color:#0a0d12;
+  }
+  .brand-name{ font-size:19px; font-weight:800; letter-spacing:-0.01em; }
+  .login-sub{ color:var(--text-dim); font-size:13.5px; line-height:1.5; margin:10px 0 26px; }
+  .field-label{ font-size:12px; color:var(--text-dim); margin-bottom:6px; display:block; }
+  .field{
+    width:100%; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; color:var(--text); font-size:14px;
+    outline:none; transition: border-color .15s;
+  }
+  .field:focus{ border-color: var(--accent); }
+  .field-group{ margin-bottom:14px; }
+  .primary-btn{
+    width:100%; background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    color:white; border-radius:12px; padding:12px; font-size:14px; font-weight:700;
+    transition: opacity .15s, transform .1s;
+  }
+  .primary-btn:hover{ opacity:.92; }
+  .primary-btn:active{ transform: scale(0.99); }
+  .primary-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .ghost-btn{
+    width:100%; background:transparent; color:var(--text-dim); padding:10px; font-size:12.5px;
+    margin-top:8px; border-radius:10px;
+  }
+  .ghost-btn:hover{ color:var(--text); background:var(--panel-2); }
+  .code-hint{
+    margin-top:16px; padding:14px; background:rgba(79,212,138,0.08); border:1px solid rgba(79,212,138,0.25);
+    border-radius:12px; font-size:12.5px; color:#bfe9d2; line-height:1.5;
+  }
+  .code-hint b{ color:var(--ok); font-variant-numeric: tabular-nums; letter-spacing:0.08em; font-size:16px; }
+  .err-msg{ color:var(--danger); font-size:12.5px; margin:2px 0 12px; }
+
+  /* ---------- App shell ---------- */
+  .shell{ width:100%; height:100%; display:none; }
+  .shell.active{ display:flex; }
+
+  .sidebar{
+    width:300px; min-width:300px; background:var(--panel); border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+  }
+  .sidebar-head{ padding:18px 18px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .me{ display:flex; align-items:center; gap:10px; }
+  .avatar{
+    width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:#0a0d12; flex-shrink:0;
+  }
+  .me-name{ font-size:13.5px; font-weight:700; }
+  .me-role{ font-size:11px; color:var(--text-dim); }
+  .icon-btn{
+    width:32px; height:32px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:14px;
+  }
+  .icon-btn:hover{ color:var(--text); border-color:var(--accent); }
+  .header-actions{ display:flex; gap:6px; }
+
+  .new-room{ padding:12px 14px; border-bottom:1px solid var(--border); display:flex; gap:8px; }
+  .new-room input{ flex:1; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:8px 10px; color:var(--text); font-size:13px; outline:none; }
+  .new-room button{ background:var(--accent); color:white; border-radius:10px; width:34px; font-weight:700; }
+
+  .room-list{ flex:1; overflow-y:auto; }
+  .room-item{
+    padding:12px 16px; display:flex; align-items:center; gap:10px; cursor:pointer;
+    border-bottom:1px solid var(--border); position:relative;
+  }
+  .room-item:hover{ background:var(--panel-2); }
+  .room-item.active{ background:var(--panel-2); }
+  .room-item.active::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+  .room-name{ font-size:13.5px; font-weight:650; }
+  .room-preview{ font-size:12px; color:var(--text-dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+  .room-meta{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .room-time{ font-size:10.5px; color:var(--text-dim); }
+  .dot{ width:8px; height:8px; border-radius:50%; }
+  .dot.online{ background:var(--ok); }
+  .dot.offline{ background:#3a4256; }
+
+  .chat-pane{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .chat-head{ padding:16px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .chat-head-title{ font-size:14.5px; font-weight:700; }
+  .status-line{ font-size:11.5px; color:var(--text-dim); display:flex; align-items:center; gap:6px; margin-top:2px; }
+  .expiry-note{ font-size:11px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+
+  .messages{ flex:1; overflow-y:auto; padding:20px 22px 6px; display:flex; flex-direction:column; }
+  .day-sep{ text-align:center; font-size:11px; color:var(--text-dim); margin:14px 0; }
+  .row{ display:flex; margin-bottom:10px; }
+  .row.mine{ justify-content:flex-end; }
+  .bubble{
+    max-width:min(420px, 72%); padding:10px 13px; border-radius:16px; font-size:13.5px; line-height:1.45;
+    position:relative;
+  }
+  .row.mine .bubble{ background: var(--bubble-mine); color:white; border-bottom-right-radius:4px; }
+  .row.theirs .bubble{ background: var(--bubble-theirs); border-bottom-left-radius:4px; border:1px solid var(--border); }
+  .sender-name{ font-size:11px; color:var(--accent); font-weight:700; margin-bottom:3px; }
+  .meta-row{ display:flex; gap:5px; justify-content:flex-end; margin-top:5px; opacity:0.7; }
+  .meta-row span{ font-size:10px; }
+  .bubble img{ display:block; max-width:260px; border-radius:10px; margin-top:2px; }
+  .bubble video{ display:block; max-width:260px; border-radius:10px; margin-top:2px; }
+  .voice-msg{ display:flex; align-items:center; gap:8px; min-width:170px; }
+  .voice-play{ width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; }
+  .row.theirs .voice-play{ background:rgba(255,255,255,0.08); }
+  .waveform{ display:flex; align-items:flex-end; gap:2px; height:22px; flex:1; }
+  .waveform span{ width:3px; background:rgba(255,255,255,0.55); border-radius:2px; }
+
+  .typing-line{ padding:0 22px 6px; font-size:11.5px; color:var(--text-dim); display:flex; align-items:center; gap:8px; min-height:18px; }
+  .typing-dots{ display:flex; gap:3px; }
+  .typing-dots span{ width:5px; height:5px; border-radius:50%; background:var(--text-dim); animation: bounce 1.2s infinite; }
+  .typing-dots span:nth-child(2){ animation-delay:0.15s; }
+  .typing-dots span:nth-child(3){ animation-delay:0.3s; }
+  @keyframes bounce{ 0%,60%,100%{ transform:translateY(0); opacity:.5;} 30%{ transform:translateY(-3px); opacity:1;} }
+
+  .composer{ padding:12px 16px; border-top:1px solid var(--border); display:flex; align-items:flex-end; gap:8px; }
+  .composer.drag{ background: rgba(91,124,250,0.06); }
+  .attach-btn{ width:36px; height:36px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-dim); flex-shrink:0; }
+  .attach-btn:hover{ color:var(--text); }
+  .composer textarea{
+    flex:1; resize:none; background:var(--panel-2); border:1px solid var(--border); border-radius:18px;
+    padding:10px 15px; color:var(--text); font-size:13.5px; outline:none; max-height:110px;
+  }
+  .composer textarea:focus{ border-color:var(--accent); }
+  .send-btn{ width:36px; height:36px; border-radius:50%; background:var(--accent); color:white; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .send-btn:disabled{ opacity:.4; }
+
+  .empty-state{ flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:13px; flex-direction:column; gap:8px; }
+
+  /* ---------- Admin overlay ---------- */
+  .overlay{ position:fixed; inset:0; background:rgba(4,6,10,0.7); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .overlay.active{ display:flex; }
+  .admin-modal{
+    width:100%; max-width:640px; max-height:86vh; overflow-y:auto; background:var(--panel);
+    border:1px solid var(--border); border-radius:20px; padding:26px;
+  }
+  .admin-head{ display:flex; align-items:center; justify-content:between; justify-content:space-between; margin-bottom:18px; }
+  .admin-title{ font-size:16px; font-weight:800; }
+  .close-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim); width:30px; height:30px; border-radius:9px; }
+  .admin-section{ margin-bottom:22px; }
+  .admin-section h3{ font-size:12px; text-transform:none; color:var(--text-dim); margin:0 0 10px; font-weight:700; }
+  .row-form{ display:flex; gap:8px; }
+  .row-form input{ flex:1; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text); font-size:13px; outline:none; }
+  .row-form button{ background:var(--accent); color:white; padding:0 16px; border-radius:10px; font-size:13px; font-weight:700; }
+  .issued-code{ margin-top:12px; padding:14px; background:rgba(79,212,138,0.08); border:1px solid rgba(79,212,138,0.25); border-radius:12px; font-size:12.5px; color:#bfe9d2; display:none; }
+  .issued-code.show{ display:block; }
+  .issued-code b{ font-size:20px; letter-spacing:0.1em; color:var(--ok); display:block; margin-top:4px; }
+
+  .user-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); gap:10px; }
+  .user-row:last-child{ border-bottom:none; }
+  .user-info{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .user-text{ min-width:0; }
+  .user-name{ font-size:13px; font-weight:650; display:flex; align-items:center; gap:6px; }
+  .user-phone{ font-size:11.5px; color:var(--text-dim); }
+  .tag{ font-size:9.5px; padding:2px 6px; border-radius:5px; font-weight:700; }
+  .tag.admin-tag{ background:rgba(91,124,250,0.18); color:var(--accent); }
+  .pill{ font-size:11.5px; padding:6px 10px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim); white-space:nowrap; }
+  .pill.on{ background:rgba(79,212,138,0.12); border-color:rgba(79,212,138,0.3); color:var(--ok); }
+  .pill.off{ background:rgba(230,87,122,0.12); border-color:rgba(230,87,122,0.3); color:var(--danger); }
+  .pill-group{ display:flex; gap:6px; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px);
+    background:var(--panel-2); border:1px solid var(--border); padding:11px 18px; border-radius:12px;
+    font-size:12.5px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:100;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width: 760px){
+    .sidebar{ position:fixed; inset:0; z-index:20; transform:translateX(-100%); transition:transform .2s; width:100%; min-width:0; }
+    .sidebar.mobile-open{ transform:translateX(0); }
+    .chat-pane{ width:100%; }
+    .mobile-back{ display:flex !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-mark">DL</div>
+        <div class="brand-name">Day Life</div>
+      </div>
+      <p class="login-sub">Private access only — no public sign-up. Sign in with your phone number and the one-time code your admin issued you.</p>
+
+      <div id="phoneStep">
+        <div class="field-group">
+          <label class="field-label">Phone number</label>
+          <input class="field" id="phoneInput" type="tel" placeholder="+1 555 123 4567" />
+        </div>
+        <div class="err-msg" id="phoneErr"></div>
+        <button class="primary-btn" id="phoneSubmit">Continue</button>
+      </div>
+
+      <div id="codeStep" style="display:none;">
+        <div class="field-group">
+          <label class="field-label">6-digit one-time code</label>
+          <input class="field" id="codeInput" type="text" maxlength="6" placeholder="••••••" style="letter-spacing:0.3em; text-align:center; font-size:18px;" />
+        </div>
+        <div class="err-msg" id="codeErr"></div>
+        <button class="primary-btn" id="codeSubmit">Sign in</button>
+        <button class="ghost-btn" id="backToPhone">Use a different number</button>
+        <div class="code-hint">
+          This is a front-end demo running with no backend — so in place of an admin texting you a code, here it is: <b id="demoCode">------</b><br/>Expires in 5 minutes, one use only.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div class="shell" id="shell">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="me">
+          <div class="avatar" id="meAvatar" style="background:linear-gradient(135deg,#8aa2ff,#5b7cfa);">A</div>
+          <div>
+            <div class="me-name" id="meName">Ana</div>
+            <div class="me-role">Signed in</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="adminBtn" title="Admin dashboard">⚙</button>
+          <button class="icon-btn" id="logoutBtn" title="Log out">⏻</button>
+        </div>
+      </div>
+      <div class="new-room">
+        <input id="newRoomInput" placeholder="New conversation name" />
+        <button id="newRoomBtn">+</button>
+      </div>
+      <div class="room-list" id="roomList"></div>
+    </div>
+
+    <div class="chat-pane">
+      <div id="chatHead" class="chat-head" style="display:none;">
+        <div>
+          <div class="chat-head-title" id="chatTitle"></div>
+          <div class="status-line"><span class="dot" id="peerDot"></span><span id="peerStatus"></span></div>
+        </div>
+        <div class="expiry-note">🕒 Messages auto-delete after 24h</div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="typing-line" id="typingLine"></div>
+      <div class="composer" id="composer" style="display:none;">
+        <button class="attach-btn" id="attachBtn" title="Attach media">📎</button>
+        <textarea id="msgInput" rows="1" placeholder="Message"></textarea>
+        <button class="send-btn" id="sendBtn" disabled>➤</button>
+      </div>
+      <div class="empty-state" id="emptyState">
+        <div style="font-size:26px;">💬</div>
+        Select or create a conversation to get started.
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN OVERLAY -->
+  <div class="overlay" id="adminOverlay">
+    <div class="admin-modal">
+      <div class="admin-head">
+        <div class="admin-title">Admin dashboard</div>
+        <button class="close-btn" id="closeAdmin">✕</button>
+      </div>
+
+      <div class="admin-section">
+        <h3>Generate one-time login code</h3>
+        <div class="row-form">
+          <input id="adminPhone" placeholder="User phone number" />
+          <input id="adminName" placeholder="Name (new users only)" style="max-width:150px;" />
+          <button id="genCodeBtn">Generate</button>
+        </div>
+        <div class="issued-code" id="issuedCode"></div>
+      </div>
+
+      <div class="admin-section">
+        <h3>Users</h3>
+        <div id="userList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Mock data (in-memory only — this is a front-end demo) ---------------- */
+  const state = {
+    pendingPhone: null,
+    pendingCode: null,
+    currentUser: null,
+    activeRoomId: null,
+    typingTimer: null,
+    autoReplyTimer: null,
+  };
+
+  const users = [
+    { id:"u1", phone:"+15551234567", name:"Ana", approved:true, disabled:false, isAdmin:true, online:true, color:"linear-gradient(135deg,#8aa2ff,#5b7cfa)" },
+    { id:"u2", phone:"+15559876543", name:"Marcus", approved:true, disabled:false, isAdmin:false, online:true, color:"linear-gradient(135deg,#ffb15b,#ff7a5b)" },
+    { id:"u3", phone:"+15552468101", name:"Priya", approved:false, disabled:false, isAdmin:false, online:false, color:"linear-gradient(135deg,#5bffb0,#3dd9a0)" },
+  ];
+
+  const rooms = [
+    { id:"r1", name:"Marcus", peerId:"u2" },
+    { id:"r2", name:"Weekend Trip", peerId:"u2" },
+  ];
+
+  const messages = {
+    r1: [
+      { id:"m1", senderId:"u2", type:"text", content:"Hey! You free to talk tonight?", createdAt: minsAgo(48) },
+      { id:"m2", senderId:"u1", type:"text", content:"Yeah, after 8pm works", createdAt: minsAgo(46) },
+      { id:"m3", senderId:"u2", type:"voice", createdAt: minsAgo(40) },
+      { id:"m4", senderId:"u1", type:"image", url:"https://picsum.photos/seed/daylife1/400/300", createdAt: minsAgo(35) },
+    ],
+    r2: [
+      { id:"m5", senderId:"u2", type:"text", content:"Sending the itinerary now", createdAt: minsAgo(20) },
+      { id:"m6", senderId:"u2", type:"video", url:"", createdAt: minsAgo(18) },
+    ],
+  };
+
+  const autoReplies = [
+    "Got it 👍", "Sounds good!", "One sec, checking now.", "Haha true.", "Can you send that again?",
+  ];
+
+  function minsAgo(m){ return new Date(Date.now() - m*60000); }
+  function uid(){ return "id" + Math.random().toString(36).slice(2,10); }
+  function fmtTime(d){ return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+
+  function toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(()=> t.classList.remove("show"), 2600);
+  }
+
+  /* ---------------- Login flow ---------------- */
+  const phoneInput = document.getElementById("phoneInput");
+  const phoneStep = document.getElementById("phoneStep");
+  const codeStep = document.getElementById("codeStep");
+  const phoneErr = document.getElementById("phoneErr");
+  const codeErr = document.getElementById("codeErr");
+  const demoCodeEl = document.getElementById("demoCode");
+
+  document.getElementById("phoneSubmit").addEventListener("click", () => {
+    const phone = phoneInput.value.trim();
+    phoneErr.textContent = "";
+    if(!/^\+?[0-9]{6,20}$/.test(phone)){
+      phoneErr.textContent = "Enter a valid phone number.";
+      return;
+    }
+    state.pendingPhone = phone;
+    state.pendingCode = String(Math.floor(100000 + Math.random()*900000));
+    demoCodeEl.textContent = state.pendingCode;
+    phoneStep.style.display = "none";
+    codeStep.style.display = "block";
+    document.getElementById("codeInput").focus();
+  });
+
+  document.getElementById("backToPhone").addEventListener("click", () => {
+    codeStep.style.display = "none";
+    phoneStep.style.display = "block";
+    codeErr.textContent = "";
+  });
+
+  document.getElementById("codeSubmit").addEventListener("click", () => {
+    const code = document.getElementById("codeInput").value.trim();
+    codeErr.textContent = "";
+    if(code !== state.pendingCode){
+      codeErr.textContent = "Invalid or expired code.";
+      return;
+    }
+    let user = users.find(u => u.phone === state.pendingPhone);
+    if(!user){
+      user = { id: uid(), phone: state.pendingPhone, name: state.pendingPhone, approved:true, disabled:false, isAdmin:false, online:true, color:"linear-gradient(135deg,#c78bff,#8b5bff)" };
+      users.push(user);
+    }
+    state.currentUser = user;
+    enterApp();
+  });
+
+  /* ---------------- App shell ---------------- */
+  function enterApp(){
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("shell").classList.add("active");
+    document.getElementById("meName").textContent = state.currentUser.name;
+    document.getElementById("meAvatar").textContent = state.currentUser.name[0].toUpperCase();
+    document.getElementById("meAvatar").style.background = state.currentUser.color;
+    document.getElementById("adminBtn").style.display = state.currentUser.isAdmin ? "flex" : "none";
+    renderRoomList();
+    if(rooms[0]) selectRoom(rooms[0].id);
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    state.currentUser = null;
+    document.getElementById("shell").classList.remove("active");
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("phoneInput").value = "";
+    document.getElementById("codeInput").value = "";
+    phoneStep.style.display = "block";
+    codeStep.style.display = "none";
+  });
+
+  function renderRoomList(){
+    const list = document.getElementById("roomList");
+    list.innerHTML = "";
+    rooms.forEach(room => {
+      const peer = users.find(u => u.id === room.peerId);
+      const msgs = messages[room.id] || [];
+      const last = msgs[msgs.length - 1];
+      const el = document.createElement("div");
+      el.className = "room-item" + (room.id === state.activeRoomId ? " active" : "");
+      el.innerHTML = `
+        <div class="avatar" style="background:${peer ? peer.color : 'linear-gradient(135deg,#888,#555)'}; width:38px; height:38px; font-size:13px;">${room.name[0].toUpperCase()}</div>
+        <div style="min-width:0;">
+          <div class="room-name">${escapeHtml(room.name)}</div>
+          <div class="room-preview">${last ? previewText(last) : "No messages yet"}</div>
+        </div>
+        <div class="room-meta">
+          <span class="room-time">${last ? fmtTime(last.createdAt) : ""}</span>
+          <span class="dot ${peer && peer.online ? 'online' : 'offline'}"></span>
+        </div>
+      `;
+      el.addEventListener("click", () => selectRoom(room.id));
+      list.appendChild(el);
+    });
+  }
+
+  function previewText(m){
+    if(m.type === "text") return escapeHtml(m.content);
+    if(m.type === "image") return "📷 Photo";
+    if(m.type === "video") return "🎬 Video";
+    if(m.type === "voice") return "🎤 Voice message";
+    return "";
+  }
+
+  function selectRoom(roomId){
+    state.activeRoomId = roomId;
+    clearTimeout(state.autoReplyTimer);
+    document.getElementById("typingLine").innerHTML = "";
+    renderRoomList();
+    const room = rooms.find(r => r.id === roomId);
+    const peer = users.find(u => u.id === room.peerId);
+    document.getElementById("emptyState").style.display = "none";
+    document.getElementById("chatHead").style.display = "flex";
+    document.getElementById("composer").style.display = "flex";
+    document.getElementById("chatTitle").textContent = room.name;
+    document.getElementById("peerStatus").textContent = peer && peer.online ? "Online" : "Offline";
+    document.getElementById("peerDot").className = "dot " + (peer && peer.online ? "online" : "offline");
+    renderMessages();
+    if(window.innerWidth <= 760) document.getElementById("sidebar").classList.remove("mobile-open");
+  }
+
+  function renderMessages(){
+    const box = document.getElementById("messages");
+    box.innerHTML = "";
+    const msgs = messages[state.activeRoomId] || [];
+    msgs.forEach(m => box.appendChild(renderBubble(m)));
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function renderBubble(m){
+    const mine = m.senderId === state.currentUser.id;
+    const sender = users.find(u => u.id === m.senderId);
+    const row = document.createElement("div");
+    row.className = "row " + (mine ? "mine" : "theirs");
+
+    let inner = "";
+    if(!mine) inner += `<div class="sender-name">${escapeHtml(sender ? sender.name : "Unknown")}</div>`;
+
+    if(m.type === "text"){
+      inner += `<div>${escapeHtml(m.content)}</div>`;
+    } else if(m.type === "image"){
+      inner += `<img src="${m.url}" alt="Shared photo" />`;
+    } else if(m.type === "video"){
+      inner += `<div style="width:260px;height:150px;border-radius:10px;background:#000 url('https://picsum.photos/seed/daylifevid/400/240') center/cover;display:flex;align-items:center;justify-content:center;font-size:26px;">▶</div>`;
+    } else if(m.type === "voice"){
+      let bars = "";
+      for(let i=0;i<22;i++){ bars += `<span style="height:${6+((i*37)%16)}px"></span>`; }
+      inner += `<div class="voice-msg"><div class="voice-play">▶</div><div class="waveform">${bars}</div></div>`;
+    }
+
+    inner += `<div class="meta-row"><span>${fmtTime(m.createdAt)}</span>${mine ? '<span>· Sent</span>' : ''}</div>`;
+    row.innerHTML = `<div class="bubble">${inner}</div>`;
+    return row;
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : s;
+    return d.innerHTML;
+  }
+
+  /* ---------------- Composer ---------------- */
+  const msgInput = document.getElementById("msgInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  msgInput.addEventListener("input", () => {
+    sendBtn.disabled = msgInput.value.trim().length === 0;
+    showTyping();
+  });
+
+  msgInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      sendText();
+    }
+  });
+
+  sendBtn.addEventListener("click", sendText);
+
+  function sendText(){
+    const val = msgInput.value.trim();
+    if(!val || !state.activeRoomId) return;
+    addMessage({ id: uid(), senderId: state.currentUser.id, type:"text", content: val, createdAt: new Date() });
+    msgInput.value = "";
+    sendBtn.disabled = true;
+    document.getElementById("typingLine").innerHTML = "";
+    scheduleAutoReply();
+  }
+
+  function addMessage(m){
+    messages[state.activeRoomId] = messages[state.activeRoomId] || [];
+    messages[state.activeRoomId].push(m);
+    renderMessages();
+    renderRoomList();
+  }
+
+  function showTyping(){
+    // simulated local echo — in the real app this emits a socket "typing" event
+    clearTimeout(state.typingTimer);
+    state.typingTimer = setTimeout(() => {}, 1000);
+  }
+
+  function scheduleAutoReply(){
+    const room = rooms.find(r => r.id === state.activeRoomId);
+    const peer = users.find(u => u.id === room.peerId);
+    if(!peer) return;
+    clearTimeout(state.autoReplyTimer);
+    const roomAtSend = state.activeRoomId;
+
+    setTimeout(() => {
+      if(state.activeRoomId !== roomAtSend) return;
+      document.getElementById("typingLine").innerHTML =
+        `<span class="typing-dots"><span></span><span></span><span></span></span>${escapeHtml(peer.name)} is typing`;
+    }, 500);
+
+    state.autoReplyTimer = setTimeout(() => {
+      if(state.activeRoomId !== roomAtSend) return;
+      document.getElementById("typingLine").innerHTML = "";
+      const reply = autoReplies[Math.floor(Math.random()*autoReplies.length)];
+      addMessage({ id: uid(), senderId: peer.id, type:"text", content: reply, createdAt: new Date() });
+    }, 500 + 1400 + Math.random()*800);
+  }
+
+  /* ---------------- Attach / drag & drop (simulated) ---------------- */
+  document.getElementById("attachBtn").addEventListener("click", () => {
+    if(!state.activeRoomId) return;
+    const kinds = ["image","video","voice"];
+    const kind = kinds[Math.floor(Math.random()*kinds.length)];
+    const m = { id: uid(), senderId: state.currentUser.id, type: kind, createdAt: new Date() };
+    if(kind === "image") m.url = `https://picsum.photos/seed/${uid()}/400/300`;
+    addMessage(m);
+    toast(kind === "image" ? "Photo sent" : kind === "video" ? "Video sent" : "Voice message sent");
+    scheduleAutoReply();
+  });
+
+  const composer = document.getElementById("composer");
+  ["dragover"].forEach(evt => composer.addEventListener(evt, e => { e.preventDefault(); composer.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(evt => composer.addEventListener(evt, e => { e.preventDefault(); composer.classList.remove("drag"); }));
+  composer.addEventListener("drop", (e) => {
+    if(!state.activeRoomId) return;
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    const kind = file && file.type.startsWith("video") ? "video" : file && file.type.startsWith("audio") ? "voice" : "image";
+    const m = { id: uid(), senderId: state.currentUser.id, type: kind, createdAt: new Date() };
+    if(kind === "image") m.url = file ? URL.createObjectURL(file) : `https://picsum.photos/seed/${uid()}/400/300`;
+    addMessage(m);
+    toast("File uploaded");
+    scheduleAutoReply();
+  });
+
+  /* ---------------- New room ---------------- */
+  document.getElementById("newRoomBtn").addEventListener("click", createRoom);
+  document.getElementById("newRoomInput").addEventListener("keydown", e => { if(e.key === "Enter") createRoom(); });
+  function createRoom(){
+    const input = document.getElementById("newRoomInput");
+    const name = input.value.trim();
+    if(!name) return;
+    const room = { id: uid(), name, peerId: null };
+    rooms.unshift(room);
+    messages[room.id] = [];
+    input.value = "";
+    renderRoomList();
+    selectRoom(room.id);
+  }
+
+  /* ---------------- Admin ---------------- */
+  const adminOverlay = document.getElementById("adminOverlay");
+  document.getElementById("adminBtn").addEventListener("click", () => {
+    adminOverlay.classList.add("active");
+    renderUserList();
+  });
+  document.getElementById("closeAdmin").addEventListener("click", () => adminOverlay.classList.remove("active"));
+  adminOverlay.addEventListener("click", (e) => { if(e.target === adminOverlay) adminOverlay.classList.remove("active"); });
+
+  document.getElementById("genCodeBtn").addEventListener("click", () => {
+    const phone = document.getElementById("adminPhone").value.trim();
+    const name = document.getElementById("adminName").value.trim();
+    if(!/^\+?[0-9]{6,20}$/.test(phone)){ toast("Enter a valid phone number"); return; }
+
+    let user = users.find(u => u.phone === phone);
+    if(!user){
+      user = { id: uid(), phone, name: name || phone, approved:false, disabled:false, isAdmin:false, online:false, color:"linear-gradient(135deg,#ffd15b,#ff9a5b)" };
+      users.push(user);
+    }
+    const code = String(Math.floor(100000 + Math.random()*900000));
+    const box = document.getElementById("issuedCode");
+    box.classList.add("show");
+    box.innerHTML = `Share this with ${escapeHtml(user.phone)} — valid 5 minutes, one use only.<b>${code}</b>`;
+    renderUserList();
+  });
+
+  function renderUserList(){
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+    users.forEach(u => {
+      const row = document.createElement("div");
+      row.className = "user-row";
+      row.innerHTML = `
+        <div class="user-info">
+          <div class="avatar" style="background:${u.color}; width:32px; height:32px; font-size:12px;">${u.name[0].toUpperCase()}</div>
+          <div class="user-text">
+            <div class="user-name">${escapeHtml(u.name)} ${u.isAdmin ? '<span class="tag admin-tag">ADMIN</span>' : ''}</div>
+            <div class="user-phone">${escapeHtml(u.phone)}</div>
+          </div>
+        </div>
+        <div class="pill-group">
+          <button class="pill ${u.approved ? 'on' : ''}" data-act="approve" data-id="${u.id}">${u.approved ? 'Approved' : 'Approve'}</button>
+          <button class="pill ${u.disabled ? 'off' : ''}" data-act="disable" data-id="${u.id}">${u.disabled ? 'Disabled' : 'Disable'}</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll("button[data-act]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const user = users.find(u => u.id === btn.dataset.id);
+        if(btn.dataset.act === "approve") user.approved = !user.approved;
+        if(btn.dataset.act === "disable") user.disabled = !user.disabled;
+        renderUserList();
+      });
+    });
+  }
+
+})();
+</script>
+</body>
+</html>

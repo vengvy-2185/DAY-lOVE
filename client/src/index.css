@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-base-950 text-slate-100 antialiased transition-colors duration-300;
+}
+html.light body {
+  @apply bg-base-100 text-slate-800;
+}
+
+/* Custom app surfaces that shift with the theme */
+.surface-panel {
+  @apply bg-base-900 border-base-700;
+}
+html.light .surface-panel {
+  @apply bg-white border-slate-200;
+}
+
+.surface-raised {
+  @apply bg-base-800 border-base-700;
+}
+html.light .surface-raised {
+  @apply bg-slate-100 border-slate-200;
+}
+
+.surface-hover:hover {
+  @apply bg-base-800;
+}
+html.light .surface-hover:hover {
+  @apply bg-slate-100;
+}
+
+.text-muted {
+  @apply text-slate-400;
+}
+html.light .text-muted {
+  @apply text-slate-500;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-base-700 rounded-full;
+}
+html.light ::-webkit-scrollbar-thumb {
+  @apply bg-slate-300;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Smooth theme + safe-area handling for phones */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

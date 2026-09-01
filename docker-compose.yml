@@ -1,0 +1,40 @@
+version: "3.9"
+
+# Optional local stack. In production you'll typically point DATABASE_URL
+# at Supabase instead of the local `db` service below and use Supabase
+# Storage instead of a local uploads volume.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: daylife
+      POSTGRES_PASSWORD: daylife
+      POSTGRES_DB: daylife
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    env_file: ./server/.env
+    environment:
+      DATABASE_URL: postgresql://daylife:daylife@db:5432/daylife
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  db_data:
