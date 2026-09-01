@@ -30,11 +30,10 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // អនុញ្ញាត mobile apps, Postman ឬ requests គ្មាន origin
     if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
       callback(null, true);
     } else {
-      callback(null, true); // អនុញ្ញាត dynamic ទាំងអស់ដើម្បីការពារបញ្ហា CORS on production
+      callback(null, true);
     }
   },
   credentials: true,
@@ -44,14 +43,22 @@ const corsOptions = {
 
 const io = new Server(server, {
   cors: corsOptions,
+  maxHttpBufferSize: 1e8, // 100MB សម្រាប់ Socket.io ផ្ញើ File/Media ធំៗ
 });
 app.set("io", io);
 
 // --- Security & core middleware ---
 app.use(cors(corsOptions));
-app.use(helmet({ crossOriginResourcePolicy: false })); // ការពារ block រូបភាព/static files
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // អនុញ្ញាតឱ្យ Browser ទាញយករូបភាព និងវីដេអូបង្ហាញលើ Frontend
+  })
+);
 
-app.use(express.json({ limit: "1mb" }));
+// ✅ កែប្រែទំហំ Limit ពី 1mb ទៅ 50mb ដើមី្បអាច Upload Photo/Video បាន
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
 app.use(apiLimiter);
 
 // --- Routes ---

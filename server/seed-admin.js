@@ -4,7 +4,7 @@ const prisma = require("./src/config/prisma");
 
 async function main() {
     const phone = "015448174"; // 📱 លេខទូរស័ព្ទ Admin របស់អ្នក (អាចដូរបាន)
-    const plainCode = "2185506206";  // 🔑 លេខកូដ Login Code (អាចដូរបាន)
+    const plainCode = "218550";  // 🔑 លេខកូដ Login Code (អាចដូរបាន)
 
     // 1. Hash លេខកូដ
     const codeHash = await bcrypt.hash(plainCode, 10);
