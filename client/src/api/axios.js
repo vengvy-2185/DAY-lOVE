@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // ប្រើ replace ដើមី្បលុប trailing slash (/) ប្រសិនបើមាន
-const rawBaseURL = import.meta.env.VITE_API_URL || "https://day-life-server.onrender.com";
+const rawBaseURL = import.meta.env.VITE_API_URL || "https://day-love-server.onrender.com";
 const baseURL = rawBaseURL.replace(/\/+$/, '');
 
 const api = axios.create({
