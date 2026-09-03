@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/axios.js";
 
+// --- Custom Modern SVG Icons ---
+
 function PaperclipIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M21.44 11.05 12.25 20.24a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.67 3.67 0 0 1 5.19 5.19L9.66 17.65a1.83 1.83 0 0 1-2.6-2.6l8.29-8.28" />
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
     </svg>
   );
 }
@@ -12,17 +14,18 @@ function PaperclipIcon(props) {
 function MicIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="9" y="2" width="6" height="12" rx="3" />
-      <path d="M5 10a7 7 0 0 0 14 0" />
-      <path d="M12 19v3M8 22h8" />
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="22" />
     </svg>
   );
 }
 
 function SendIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M3.4 20.6 22 12 3.4 3.4 3 10l13 2-13 2z" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
     </svg>
   );
 }
@@ -31,16 +34,18 @@ function TrashIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
     </svg>
   );
 }
 
 function CheckIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m5 13 4 4L19 7" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="20 6 9 17 4 12" />
     </svg>
   );
 }
@@ -48,10 +53,30 @@ function CheckIcon(props) {
 function CloseIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M18 6 6 18M6 6l12 12" />
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
+
+function EditIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+function ReplyIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="9 17 4 12 9 7" />
+      <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+    </svg>
+  );
+}
+
+// --- Main MessageInput Component ---
 
 function formatDuration(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -95,7 +120,6 @@ export default function MessageInput({
   const timerRef = useRef(null);
   const cancelledRef = useRef(false);
 
-  // Sync state ពេលចុច Edit ឬ Reply
   useEffect(() => {
     if (editingMessage) {
       setText(editingMessage.content || "");
@@ -105,7 +129,6 @@ export default function MessageInput({
     }
   }, [editingMessage, replyingTo]);
 
-  // Auto-grow textarea height
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -227,7 +250,7 @@ export default function MessageInput({
           className="w-10 h-10 shrink-0 rounded-full surface-raised border flex items-center justify-center text-red-500 hover:bg-red-500/10 active:scale-95 transition"
           aria-label="Cancel recording"
         >
-          <TrashIcon width={17} height={17} />
+          <TrashIcon className="w-5 h-5" />
         </button>
 
         <div className="flex-1 flex items-center gap-2.5 surface-raised border rounded-2xl px-4 py-2.5 min-w-0">
@@ -253,7 +276,7 @@ export default function MessageInput({
           className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
           aria-label="Send voice message"
         >
-          <CheckIcon width={18} height={18} />
+          <CheckIcon className="w-5 h-5" />
         </button>
       </div>
     );
@@ -261,12 +284,20 @@ export default function MessageInput({
 
   return (
     <div className="flex flex-col w-full">
-      {/* Banner បង្ហាញ preview ពេលកំពុង Reply ឬ Edit */}
+      {/* Banner Preview ពេលកំពុង Reply ឬ Edit (ជំនួស Emoji ដោយ SVG Icon) */}
       {(replyingTo || editingMessage) && (
         <div className="flex items-center justify-between px-4 py-2 border-t border-x border-base-700/60 bg-base-800/80 rounded-t-2xl text-xs backdrop-blur-sm">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-accent font-semibold shrink-0">
-              {editingMessage ? "✏️ Editing Message" : `↩️ Replying to ${replyingTo?.sender?.name || "User"}`}
+            <span className="text-accent font-semibold shrink-0 flex items-center gap-1.5">
+              {editingMessage ? (
+                <>
+                  <EditIcon className="w-3.5 h-3.5" /> Editing Message
+                </>
+              ) : (
+                <>
+                  <ReplyIcon className="w-3.5 h-3.5" /> Replying to {replyingTo?.sender?.name || "User"}
+                </>
+              )}
             </span>
             <span className="text-muted truncate max-w-[200px] sm:max-w-[400px]">
               {editingMessage ? editingMessage.content : replyingTo?.content || `[${replyingTo?.type}]`}
@@ -277,12 +308,12 @@ export default function MessageInput({
             className="p-1 text-muted hover:text-white rounded-full transition shrink-0"
             aria-label="Cancel action"
           >
-            <CloseIcon width={14} height={14} />
+            <CloseIcon className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Main Form Box */}
+      {/* Main Input Box */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -299,7 +330,7 @@ export default function MessageInput({
           aria-label="Attach file"
           disabled={uploading || !!editingMessage}
         >
-          <PaperclipIcon width={18} height={18} />
+          <PaperclipIcon className="w-5 h-5" />
         </button>
         <input
           ref={fileInputRef}
@@ -343,15 +374,15 @@ export default function MessageInput({
             className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
             aria-label="Send message"
           >
-            <SendIcon width={18} height={18} />
+            <SendIcon className="w-4 h-4" />
           </button>
         ) : (
           <button
             onClick={startRecording}
             disabled={uploading || !!editingMessage}
             className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition disabled:opacity-40 ${micDenied
-                ? "bg-red-500/15 text-red-500 border border-red-500/30"
-                : "bg-brand-gradient text-white shadow-glow"
+              ? "bg-red-500/15 text-red-500 border border-red-500/30"
+              : "bg-brand-gradient text-white shadow-glow"
               }`}
             aria-label="Record voice message"
             title={
@@ -360,7 +391,7 @@ export default function MessageInput({
                 : "Record voice message"
             }
           >
-            <MicIcon width={18} height={18} />
+            <MicIcon className="w-5 h-5" />
           </button>
         )}
       </div>

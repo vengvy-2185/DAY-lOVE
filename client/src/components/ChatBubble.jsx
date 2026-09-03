@@ -7,16 +7,49 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content || "");
 
+  // State សម្រាប់គ្រប់គ្រង Touch Gesture (Swipe-to-Reply)
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [translateX, setTranslateX] = useState(0);
+
   const handleSaveEdit = () => {
     if (!editText.trim()) return;
     onEdit(message.id, editText);
     setIsEditing(false);
   };
 
+  // ចាប់ផ្តើមប៉ះអេក្រង់
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  // ពេលកំពុងអូស
+  const handleTouchMove = (e) => {
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - touchStartX;
+    // អនុញ្ញាតឱ្យអូសបានតែទៅខាងស្តាំ (diff > 0) និងអតិបរមា 80px
+    if (diff > 0 && diff < 80) {
+      setTranslateX(diff);
+    }
+  };
+
+  // ពេលលែងដៃ
+  const handleTouchEnd = () => {
+    if (translateX > 45) { // បើអូសលើសពី 45px វានឹង trigger មុខងារ Reply
+      onReply(message);
+    }
+    setTranslateX(0); // ត្រឡប់មកទីតាំងដើមវិញ
+  };
+
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"} px-3 sm:px-4 animate-bubble-in group`}>
-      <div className="flex items-center gap-1.5 max-w-[85%] sm:max-w-[75%]">
-        
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ transform: `translateX(${translateX}px)` }}
+        className="flex items-center gap-1.5 max-w-[85%] sm:max-w-[75%] transition-transform duration-100 ease-out"
+      >
+
         {/* Actions Menu (បង្ហាញរាល់ពេល Hover) */}
         <div className={`hidden group-hover:flex items-center gap-1 text-xs shrink-0 ${isOwn ? "order-first" : "order-last"}`}>
           <button
@@ -50,11 +83,10 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
 
         {/* Message Bubble Body */}
         <div
-          className={`w-full rounded-2xl px-3.5 py-2.5 mb-2 shadow-sm ${
-            isOwn
-              ? "bg-brand-gradient text-white rounded-br-md"
-              : "surface-raised border rounded-bl-md"
-          }`}
+          className={`w-full rounded-2xl px-3.5 py-2.5 mb-2 shadow-sm ${isOwn
+            ? "bg-brand-gradient text-white rounded-br-md"
+            : "surface-raised border rounded-bl-md"
+            }`}
         >
           {/* ឈ្មោះអ្នកផ្ញើ (ចំពោះសារអ្នកដទៃ) */}
           {!isOwn && message.sender?.name && (
