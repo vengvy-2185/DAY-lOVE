@@ -23,11 +23,13 @@ model User {
   disabled  Boolean  @default(false)
   isAdmin   Boolean  @default(false) @map("is_admin")
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   loginCodes LoginCode[]
   sessions   Session[]
   messages   Message[]
 
+  @@index([phone])
   @@map("users")
 }
 
