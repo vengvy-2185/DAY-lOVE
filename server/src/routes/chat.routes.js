@@ -18,5 +18,7 @@ router.post("/rooms", validate(createRoomSchema), createRoom);
 router.delete("/rooms/:id", deleteRoom);
 router.get("/messages/:roomId", listMessages);
 router.post("/messages", validate(createMessageSchema), createMessage);
+router.put("/messages/:id", requireAuth, chatController.editMessage);
+router.delete("/messages/:id", requireAuth, chatController.deleteMessage);
 
 module.exports = router;

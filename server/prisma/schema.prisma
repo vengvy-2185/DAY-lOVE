@@ -64,10 +64,14 @@ model Message {
   type      MessageType
   content   String?     @db.Text
   mediaUrl  String?     @map("media_url") @db.Text
+  isEdited  Boolean     @default(false) @map("is_edited")
+  replyToId String?     @map("reply_to_id") @db.Uuid
   createdAt DateTime    @default(now()) @map("created_at")
 
-  room   Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender   User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo  Message? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies  Message[]@relation("MessageReplies")
 
   @@index([roomId])
   @@index([createdAt])
