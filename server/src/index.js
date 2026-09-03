@@ -18,13 +18,13 @@ const app = express();
 const server = http.createServer(app);
 
 // 1. Clean up CLIENT_ORIGIN
-const rawOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const rawOrigin = process.env.CLIENT_ORIGIN || "https://day-l-ove.vercel.app";
 const CLIENT_ORIGIN = rawOrigin.replace(/\/+$/, "");
 
 // 2. CORS Dynamic Allowed Origins Configuration
 const allowedOrigins = [
   CLIENT_ORIGIN,
-  "https://day-life-two.vercel.app",
+  "https://day-l-ove.vercel.app",
   "http://localhost:5173",
 ];
 
