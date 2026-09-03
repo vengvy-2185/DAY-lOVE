@@ -21,19 +21,24 @@ const server = http.createServer(app);
 const rawOrigin = process.env.CLIENT_ORIGIN || "https://day-l-ove.vercel.app";
 const CLIENT_ORIGIN = rawOrigin.replace(/\/+$/, "");
 
-// 2. CORS Dynamic Allowed Origins Configuration
+// 2. CORS Allowed Origins Configuration
 const allowedOrigins = [
   CLIENT_ORIGIN,
   "https://day-l-ove.vercel.app",
+  "https://day-life-two.vercel.app",
   "http://localhost:5173",
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+    // អនុញ្ញាតឱ្យ Request ដែលគ្មាន Origin (ដូចជា Mobile App, Postman) ឬ Domain ដែលមានក្នុង List
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/+$/, "");
+    if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
-      callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
