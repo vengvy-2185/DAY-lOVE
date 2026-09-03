@@ -31,15 +31,20 @@ export default function Chat() {
 
   const scrollRef = useRef(null);
 
+  // Fetch initial rooms list
   useEffect(() => {
     api.get("/rooms")
       .then(({ data }) => {
         setRooms(data);
-        if (data[0]) setActiveRoomId(data[0].id);
+        if (data && data.length > 0) {
+          const firstRoomId = data[0].id || data[0]._id;
+          setActiveRoomId(firstRoomId);
+        }
       })
       .catch(console.error);
   }, []);
 
+  // Room Specific Logic & Realtime Listeners
   useEffect(() => {
     if (!activeRoomId) return;
     const socket = getSocket();
@@ -59,15 +64,16 @@ export default function Chat() {
     }
 
     function onUpdate(updatedMsg) {
-      if (updatedMsg.roomId !== activeRoomId) return;
+      const updatedId = updatedMsg.id || updatedMsg._id;
+      if (updatedMsg.roomId && updatedMsg.roomId !== activeRoomId) return;
       setMessages((prev) =>
-        prev.map((msg) => (msg.id === updatedMsg.id ? updatedMsg : msg))
+        prev.map((msg) => ((msg.id || msg._id) === updatedId ? updatedMsg : msg))
       );
     }
 
     function onDelete({ messageId, roomId }) {
       if (roomId && roomId !== activeRoomId) return;
-      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+      setMessages((prev) => prev.filter((msg) => (msg.id || msg._id) !== messageId));
     }
 
     function onTyping({ roomId, name, isTyping }) {
@@ -101,7 +107,7 @@ export default function Chat() {
   useEffect(() => {
     const socket = getSocket();
     function onRoomDeleted({ roomId }) {
-      setRooms((prev) => prev.filter((r) => r.id !== roomId));
+      setRooms((prev) => prev.filter((r) => (r.id || r._id) !== roomId));
       setActiveRoomId((prev) => {
         if (prev !== roomId) return prev;
         setMobileView("list");
@@ -119,34 +125,34 @@ export default function Chat() {
     }
   }, [messages]);
 
-  // មុខងារកែប្រែសារផ្ទាល់ (Inline Edit Direct Call)
+  // មុខងារកែប្រែសារផ្ទាល់ (Optimistic Update & Realtime Socket Broadcast)
   function handleEditMessage(messageId, newContent) {
     const socket = getSocket();
-    socket?.emit("edit_message", { messageId, content: newContent }, (ack) => {
-      if (!ack?.ok) {
-        alert(ack?.error || "Failed to edit message");
-      } else {
-        // Update UI ភ្លាមៗ locally
-        setMessages((prev) =>
-          prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent, isEdited: true } : msg))
-        );
-      }
-    });
+
+    // 1. Update Local State ភ្លាមៗ (Optimistic UI)
+    setMessages((prev) =>
+      prev.map((msg) =>
+        (msg.id || msg._id) === messageId
+          ? { ...msg, content: newContent, isEdited: true }
+          : msg
+      )
+    );
+
+    // 2. Emit Event ទៅ Backend
+    socket?.emit("edit_message", { messageId, content: newContent, roomId: activeRoomId });
   }
 
-  // មុខងារលុបសារ
+  // មុខងារលុបសារ (Optimistic Update & Realtime Socket Broadcast)
   function handleDeleteMessage(messageId) {
     if (!window.confirm("តើអ្នកពិតជាចង់លុបសារនេះមែនទេ?")) return;
 
     const socket = getSocket();
-    socket?.emit("delete_message", { messageId, roomId: activeRoomId }, (ack) => {
-      if (!ack?.ok) {
-        alert(ack?.error || "Failed to delete message");
-      } else {
-        // Update UI ភ្លាមៗ locally
-        setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-      }
-    });
+
+    // 1. Update Local State ភ្លាមៗ
+    setMessages((prev) => prev.filter((msg) => (msg.id || msg._id) !== messageId));
+
+    // 2. Emit Event ទៅ Backend
+    socket?.emit("delete_message", { messageId, roomId: activeRoomId });
   }
 
   // មុខងារផ្ញើសារពី MessageInput Component
@@ -157,10 +163,10 @@ export default function Chat() {
     if (payload.type === "edit") {
       handleEditMessage(payload.id, payload.content);
     } else {
-      socket?.emit("send_message", { roomId: activeRoomId, ...payload }, (ack) => {
-        if (!ack?.ok) alert(ack?.error || "Failed to send message");
-      });
+      socket?.emit("send_message", { roomId: activeRoomId, ...payload });
     }
+    setReplyingTo(null);
+    setEditingMessage(null);
   }
 
   function handleTyping(isTyping) {
@@ -172,7 +178,7 @@ export default function Chat() {
     try {
       const { data } = await api.post("/rooms", { name });
       setRooms((prev) => [data, ...prev]);
-      selectRoom(data.id);
+      selectRoom(data.id || data._id);
     } catch (err) {
       alert("Failed to create room");
     }
@@ -180,7 +186,7 @@ export default function Chat() {
 
   async function deleteRoom(roomId) {
     const previousRooms = rooms;
-    setRooms((prev) => prev.filter((r) => r.id !== roomId));
+    setRooms((prev) => prev.filter((r) => (r.id || r._id) !== roomId));
     if (activeRoomId === roomId) {
       setActiveRoomId(null);
       setMobileView("list");
@@ -198,7 +204,7 @@ export default function Chat() {
     setMobileView("chat");
   }
 
-  const activeRoom = rooms.find((r) => r.id === activeRoomId);
+  const activeRoom = rooms.find((r) => (r.id || r._id) === activeRoomId);
 
   return (
     <div className="h-screen flex overflow-hidden bg-base-900 text-base-100">
@@ -237,19 +243,27 @@ export default function Chat() {
 
             {/* Messages Body */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 px-2 sm:px-4 space-y-3">
-              {messages.map((m) => (
-                <ChatBubble
-                  key={m.id}
-                  message={m}
-                  isOwn={m.senderId === user?.id}
-                  onReply={(msg) => {
-                    setEditingMessage(null);
-                    setReplyingTo(msg);
-                  }}
-                  onEdit={(id, newContent) => handleEditMessage(id, newContent)}
-                  onDelete={(id) => handleDeleteMessage(id)}
-                />
-              ))}
+              {messages.map((m) => {
+                const msgId = m.id || m._id;
+                const isMyMessage =
+                  m.senderId === user?.id ||
+                  m.sender?._id === user?.id ||
+                  m.sender?.id === user?.id;
+
+                return (
+                  <ChatBubble
+                    key={msgId}
+                    message={m}
+                    isOwn={isMyMessage}
+                    onReply={(msg) => {
+                      setEditingMessage(null);
+                      setReplyingTo(msg);
+                    }}
+                    onEdit={(id, newContent) => handleEditMessage(id, newContent)}
+                    onDelete={(id) => handleDeleteMessage(id)}
+                  />
+                );
+              })}
             </div>
 
             {/* Typing Indicator */}
