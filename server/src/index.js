@@ -25,7 +25,6 @@ const CLIENT_ORIGIN = rawOrigin.replace(/\/+$/, "");
 const allowedOrigins = [
   CLIENT_ORIGIN,
   "https://day-l-ove.vercel.app",
-  "https://day-life-two.vercel.app",
   "http://localhost:5173",
 ];
 
