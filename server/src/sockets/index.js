@@ -84,6 +84,54 @@ function initSockets(io) {
       }
     });
 
+    // -------------------------------------------------------------
+    // ✏️ 1. EDIT MESSAGE (កែប្រែសារ)
+    // -------------------------------------------------------------
+    socket.on("edit_message", async ({ messageId, content, roomId }, callback) => {
+      try {
+        if (!content) throw new Error("content is required");
+
+        // ការពារ seguridad: ធានាថាមានតែម្ចាស់សារទេដែល [@senderId] អាចកែបាន
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message) throw new Error("Message not found");
+        if (message.senderId !== socket.user.id) throw new Error("Unauthorized");
+
+        const updatedMessage = await prisma.message.update({
+          where: { id: messageId },
+          data: { content, isEdited: true },
+          include: { sender: { select: { id: true, name: true, phone: true } } },
+        });
+
+        const targetRoom = roomId || updatedMessage.roomId;
+        io.to(targetRoom).emit("message_updated", updatedMessage);
+        callback?.({ ok: true, message: updatedMessage });
+      } catch (err) {
+        callback?.({ ok: false, error: err.message });
+      }
+    });
+
+    // -------------------------------------------------------------
+    // 🗑️ 2. DELETE MESSAGE (លុបសារ)
+    // -------------------------------------------------------------
+    socket.on("delete_message", async ({ messageId, roomId }, callback) => {
+      try {
+        // ការពារ seguridad: ធានាថាមានតែម្ចាស់សារទេដែល [@senderId] អាចលុបបាន
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message) throw new Error("Message not found");
+        if (message.senderId !== socket.user.id) throw new Error("Unauthorized");
+
+        await prisma.message.delete({
+          where: { id: messageId },
+        });
+
+        const targetRoom = roomId || message.roomId;
+        io.to(targetRoom).emit("message_deleted", { messageId, roomId: targetRoom });
+        callback?.({ ok: true });
+      } catch (err) {
+        callback?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("read_receipt", ({ roomId, messageId }) => {
       socket.to(roomId).emit("read_receipt", {
         roomId,
