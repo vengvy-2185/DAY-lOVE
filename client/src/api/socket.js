@@ -4,7 +4,7 @@ let socket = null;
 
 export function connectSocket(token) {
   if (socket) socket.disconnect();
-  socket = io(import.meta.env.VITE_API_URL || "https://chat-frients.onrender.com", {
+  socket = io(import.meta.env.VITE_API_URL || " https://day-love-server.onrender.com", {
     auth: { token },
     autoConnect: true,
   });

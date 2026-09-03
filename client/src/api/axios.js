@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const rawBaseURL = import.meta.env.VITE_API_URL || "https://chat-frients.onrender.com";
+const rawBaseURL = import.meta.env.VITE_API_URL || " https://day-love-server.onrender.com";
 const baseURL = rawBaseURL.replace(/\/+$/, '');
 
 const api = axios.create({
