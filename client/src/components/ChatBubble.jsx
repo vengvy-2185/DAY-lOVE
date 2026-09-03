@@ -3,10 +3,10 @@ import ImagePreview from "./ImagePreview.jsx";
 import VideoPlayer from "./VideoPlayer.jsx";
 import VoicePlayer from "./VoicePlayer.jsx";
 
-// --- SVG Icons ស្តើងៗ Bolder/Cleaner ---
+// --- SVG Icons ---
 function CheckIcon({ isRead }) {
   return (
-    <span className={`text-[10px] font-semibold tracking-tighter ${isRead ? "text-sky-300" : "opacity-50"}`}>
+    <span className={`text-[10px] font-semibold tracking-tighter ${isRead ? "text-sky-400" : "opacity-60 text-slate-300"}`}>
       {isRead ? "✓✓" : "✓"}
     </span>
   );
@@ -43,7 +43,6 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content || "");
 
-  // State សម្រាប់ Touch Gesture (Swipe-to-Reply)
   const [touchStartX, setTouchStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
 
@@ -73,17 +72,17 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
   };
 
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} px-2 sm:px-4 my-1 group animate-bubble-in`}>
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} px-2 sm:px-4 my-1.5 group animate-bubble-in`}>
       <div
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{ transform: `translateX(${translateX}px)` }}
-        className="relative flex items-center gap-1.5 max-w-[85%] sm:max-w-[72%] transition-transform duration-100 ease-out"
+        className="relative flex items-center gap-1.5 max-w-[85%] sm:max-w-[70%] transition-transform duration-100 ease-out"
       >
-        {/* Hover Actions Menu (Floating Menu កញ្ចក់ស្បៃ) */}
+        {/* Floating Action Bar */}
         <div
-          className={`hidden group-hover:flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-900/80 border border-slate-700/50 backdrop-blur-md shadow-lg shrink-0 transition-all ${isOwn ? "order-first" : "order-last"
+          className={`hidden group-hover:flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-800/90 border border-slate-700/60 backdrop-blur-md shadow-md shrink-0 transition-all ${isOwn ? "order-first" : "order-last"
             }`}
         >
           <button
@@ -115,57 +114,52 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
           )}
         </div>
 
-        {/* Message Bubble Body */}
+        {/* Message Bubble Base */}
         <div
           className={`w-full rounded-2xl px-3.5 py-2.5 shadow-sm transition-all duration-200 ${isOwn
-            ? "bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white rounded-br-xs border border-violet-400/20 shadow-indigo-950/20"
-            : "bg-slate-800/80 backdrop-blur-md text-slate-100 rounded-bl-xs border border-slate-700/40 shadow-slate-950/20"
+            ? "bg-indigo-600/90 text-white rounded-br-xs border border-indigo-500/30"
+            : "bg-slate-800/90 text-slate-100 rounded-bl-xs border border-slate-700/50"
             }`}
         >
-          {/* ឈ្មោះអ្នកផ្ញើ (ចំពោះសារអ្នកដទៃ) */}
+          {/* Sender Name */}
           {!isOwn && message.sender?.name && (
-            <div className="text-[11px] font-semibold text-violet-400 mb-0.5 tracking-wide">
+            <div className="text-[11.5px] font-semibold text-sky-400 mb-1 tracking-wide">
               {message.sender.name}
             </div>
           )}
 
-          {/* Quote / Reply Preview Panel */}
+          {/* Telegram Quote Box Standard */}
           {message.replyTo && (
-            <div
-              className={`mb-2 p-1.5 px-2.5 rounded-lg text-xs border-l-2 backdrop-blur-sm ${isOwn
-                ? "bg-black/20 border-violet-300 text-violet-100"
-                : "bg-slate-900/40 border-violet-500 text-slate-300"
-                }`}
-            >
-              <div className="font-semibold text-[11px] text-violet-300">
+            <div className="mb-2 pl-2.5 py-1 pr-2 rounded-r-lg bg-black/20 border-l-[3px] border-sky-400 flex flex-col gap-0.5">
+              <span className="text-[11px] font-bold text-sky-300 tracking-wide">
                 {message.replyTo.sender?.name || "User"}
-              </div>
-              <div className="truncate opacity-80 text-[11px]">
+              </span>
+              <span className="text-[12px] text-slate-200 line-clamp-1 opacity-90 font-normal">
                 {message.replyTo.content || `[${message.replyTo.type}]`}
-              </div>
+              </span>
             </div>
           )}
 
-          {/* Inline Edit Mode */}
+          {/* Edit / View Mode */}
           {isEditing ? (
             <div className="flex flex-col gap-2 my-1">
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full p-2 bg-black/30 border border-violet-400/40 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
+                className="w-full p-2 bg-slate-900 border border-indigo-400/50 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none"
                 rows={2}
                 autoFocus
               />
               <div className="flex justify-end gap-1.5 text-xs">
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="px-2.5 py-1 rounded-lg bg-black/20 hover:bg-black/40 text-slate-300 transition"
+                  className="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-2.5 py-1 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-medium transition shadow-sm"
+                  className="px-2.5 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium transition shadow-sm"
                 >
                   Save
                 </button>
@@ -173,9 +167,8 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
             </div>
           ) : (
             <>
-              {/* Media & Text Views */}
               {message.type === "text" && (
-                <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed tracking-wide">
+                <p className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed">
                   {message.content}
                 </p>
               )}
@@ -185,8 +178,8 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
             </>
           )}
 
-          {/* Footer (Time, Edited tag, Read Receipts) */}
-          <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isOwn ? "text-violet-200/70" : "text-slate-400"}`}>
+          {/* Footer Info */}
+          <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-slate-300/80">
             {message.isEdited && <span className="italic opacity-80">edited</span>}
             <span>
               {new Date(message.createdAt).toLocaleTimeString([], {

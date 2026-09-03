@@ -22,29 +22,31 @@
   }
 
   body {
-    @apply bg-base-950 text-slate-100 antialiased transition-colors duration-300 font-sans selection:bg-accent/30 selection:text-accent;
+    /* Dark Mode Theme: Dark Slate Clean */
+    @apply bg-slate-950 text-slate-100 antialiased transition-colors duration-200 font-sans selection:bg-indigo-500/30 selection:text-indigo-300;
   }
 
   html.light body {
-    @apply bg-slate-50 text-slate-800;
+    /* Light Mode Theme: Clean Soft White */
+    @apply bg-slate-100 text-slate-800 selection:bg-indigo-500/20 selection:text-indigo-600;
   }
 }
 
-/* Custom app surfaces that shift with theme */
+/* Custom Surface Panels */
 .surface-panel {
-  @apply bg-base-900/90 border-base-700/60 backdrop-blur-md;
+  @apply bg-slate-900/90 border-slate-800/80 backdrop-blur-md;
 }
 
 html.light .surface-panel {
-  @apply bg-white/90 border-slate-200/80 backdrop-blur-md;
+  @apply bg-white/90 border-slate-200 backdrop-blur-md;
 }
 
 .surface-raised {
-  @apply bg-base-800/80 border-base-700/60;
+  @apply bg-slate-800/80 border-slate-700/60;
 }
 
 html.light .surface-raised {
-  @apply bg-slate-100/80 border-slate-200/80;
+  @apply bg-slate-200/60 border-slate-300/60;
 }
 
 .surface-hover {
@@ -52,11 +54,11 @@ html.light .surface-raised {
 }
 
 .surface-hover:hover {
-  @apply bg-base-800/60;
+  @apply bg-slate-800/60;
 }
 
 html.light .surface-hover:hover {
-  @apply bg-slate-100/80;
+  @apply bg-slate-200/80;
 }
 
 .text-muted {
@@ -67,14 +69,14 @@ html.light .text-muted {
   @apply text-slate-500;
 }
 
-/* Modern & Minimal Scrollbar */
+/* Modern Minimal Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-base-700/60 rounded-full hover:bg-base-600 transition;
+  @apply bg-slate-700/60 rounded-full hover:bg-slate-600 transition;
 }
 
 html.light ::-webkit-scrollbar-thumb {
@@ -85,7 +87,7 @@ html.light ::-webkit-scrollbar-thumb {
   background: transparent;
 }
 
-/* Safe-area handling for mobile devices */
+/* Mobile Touch & Safe-area */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -98,12 +100,12 @@ html.light ::-webkit-scrollbar-thumb {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Gradient & Glow Helpers */
+/* Gradient & Glow Effects */
 .shadow-glow {
-  box-shadow: 0 0 20px -5px rgba(var(--accent-rgb, 99, 102, 241), 0.25);
+  box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.2);
 }
 
-/* Animations */
+/* Animations (Smooth Chat Transitions) */
 @keyframes recording-bar {
 
   0%,
@@ -142,7 +144,7 @@ html.light ::-webkit-scrollbar-thumb {
 @keyframes bubble-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    transform: translateY(6px) scale(0.98);
   }
 
   to {
@@ -152,7 +154,7 @@ html.light ::-webkit-scrollbar-thumb {
 }
 
 .animate-bubble-in {
-  animation: bubble-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: bubble-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fade-in {
@@ -168,5 +170,5 @@ html.light ::-webkit-scrollbar-thumb {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

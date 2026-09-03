@@ -97,7 +97,7 @@ function pickRecorderMime() {
   return "";
 }
 
-// --- Main Component with Safe Props Defaults ---
+// --- Main Component ---
 
 export default function MessageInput({
   onSend = () => { },
@@ -246,36 +246,36 @@ export default function MessageInput({
 
   if (recording) {
     return (
-      <div className="p-3 border-t border-base-700/60 surface-panel flex items-center gap-3">
+      <div className="p-3 border-t border-slate-700/60 bg-slate-900 flex items-center gap-3">
         <button
           onClick={() => finishRecording(true)}
-          className="w-10 h-10 shrink-0 rounded-full surface-raised border flex items-center justify-center text-red-500 hover:bg-red-500/10 active:scale-95 transition"
+          className="w-10 h-10 shrink-0 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 active:scale-95 transition"
           aria-label="Cancel recording"
         >
           <TrashIcon className="w-5 h-5" />
         </button>
 
-        <div className="flex-1 flex items-center gap-2.5 surface-raised border rounded-2xl px-4 py-2.5 min-w-0">
+        <div className="flex-1 flex items-center gap-2.5 bg-slate-800/80 border border-slate-700/60 rounded-2xl px-4 py-2.5 min-w-0">
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
           </span>
-          <span className="text-sm font-medium tabular-nums shrink-0">{formatDuration(recordSeconds)}</span>
+          <span className="text-sm font-medium tabular-nums text-white shrink-0">{formatDuration(recordSeconds)}</span>
           <div className="flex-1 flex items-end gap-[3px] h-5 overflow-hidden">
             {Array.from({ length: 28 }, (_, i) => (
               <span
                 key={i}
-                className="w-[3px] rounded-full bg-accent/70 animate-recording-bar shrink-0"
+                className="w-[3px] rounded-full bg-sky-400/80 animate-pulse shrink-0"
                 style={{ height: "40%", animationDelay: `${(i % 7) * 0.08}s` }}
               />
             ))}
           </div>
-          <span className="text-xs text-muted shrink-0 hidden sm:inline">Recording…</span>
+          <span className="text-xs text-slate-400 shrink-0 hidden sm:inline">Recording…</span>
         </div>
 
         <button
           onClick={() => finishRecording(false)}
-          className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
+          className="w-10 h-10 shrink-0 rounded-full bg-sky-500 hover:bg-sky-400 text-white shadow-md flex items-center justify-center active:scale-95 transition"
           aria-label="Send voice message"
         >
           <CheckIcon className="w-5 h-5" />
@@ -285,29 +285,31 @@ export default function MessageInput({
   }
 
   return (
-    <div className="flex flex-col w-full">
-      {/* Banner Preview ពេល Reply ឬ Edit */}
+    <div className="flex flex-col w-full bg-slate-900">
+      {/* Telegram-style Reply / Edit Banner (ប្រអប់ Banner ខាងលើ Input) */}
       {(replyingTo || editingMessage) && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-x border-base-700/60 bg-base-800/80 rounded-t-2xl text-xs backdrop-blur-sm">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-accent font-semibold shrink-0 flex items-center gap-1.5">
-              {editingMessage ? (
-                <>
-                  <EditIcon className="w-3.5 h-3.5" /> Editing Message
-                </>
-              ) : (
-                <>
-                  <ReplyIcon className="w-3.5 h-3.5" /> Replying to {replyingTo?.sender?.name || "User"}
-                </>
-              )}
-            </span>
-            <span className="text-muted truncate max-w-[200px] sm:max-w-[400px]">
-              {editingMessage ? editingMessage.content : replyingTo?.content || `[${replyingTo?.type}]`}
-            </span>
+        <div className="flex items-center justify-between px-3.5 py-2 border-t border-x border-slate-700/60 bg-slate-900/95 rounded-t-2xl text-xs backdrop-blur-md">
+          <div className="flex items-center gap-2.5 min-w-0 border-l-[3px] border-sky-400 pl-2.5">
+            <div className="flex flex-col min-w-0">
+              <span className="text-sky-400 font-bold flex items-center gap-1.5 text-[11.5px]">
+                {editingMessage ? (
+                  <>
+                    <EditIcon className="w-3.5 h-3.5" /> Editing Message
+                  </>
+                ) : (
+                  <>
+                    <ReplyIcon className="w-3.5 h-3.5" /> Reply to {replyingTo?.sender?.name || "User"}
+                  </>
+                )}
+              </span>
+              <span className="text-slate-300 truncate max-w-[220px] sm:max-w-[480px] text-[12px] opacity-90">
+                {editingMessage ? editingMessage.content : replyingTo?.content || `[${replyingTo?.type}]`}
+              </span>
+            </div>
           </div>
           <button
             onClick={() => onCancelAction?.()}
-            className="p-1 text-muted hover:text-white rounded-full transition shrink-0"
+            className="p-1 text-slate-400 hover:text-white rounded-full transition shrink-0"
             aria-label="Cancel action"
           >
             <CloseIcon className="w-4 h-4" />
@@ -323,12 +325,12 @@ export default function MessageInput({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        className={`p-3 border-t border-base-700/60 surface-panel flex items-end gap-2 transition-colors ${dragging ? "bg-accent/10" : ""
+        className={`p-3 border-t border-slate-700/60 flex items-end gap-2 transition-colors ${dragging ? "bg-sky-500/10" : ""
           } ${replyingTo || editingMessage ? "rounded-b-2xl border-t-0" : ""}`}
       >
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 shrink-0 rounded-full surface-raised border flex items-center justify-center hover:opacity-80 active:scale-95 transition text-muted"
+          className="w-10 h-10 shrink-0 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center hover:bg-slate-700/60 active:scale-95 transition text-slate-400"
           aria-label="Attach file"
           disabled={uploading || !!editingMessage}
         >
@@ -367,13 +369,13 @@ export default function MessageInput({
                   : "Message"
           }
           disabled={uploading}
-          className="flex-1 resize-none surface-raised border rounded-2xl px-4 py-2.5 text-[15px] leading-6 outline-none focus:ring-2 focus:ring-accent/50 transition max-h-32 placeholder:text-muted disabled:opacity-60"
+          className="flex-1 resize-none bg-slate-800 border border-slate-700/60 rounded-2xl px-4 py-2.5 text-[14.5px] leading-6 text-white outline-none focus:ring-1 focus:ring-sky-400/50 transition max-h-32 placeholder:text-slate-400 disabled:opacity-60"
         />
 
         {text.trim() ? (
           <button
             onClick={submitText}
-            className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
+            className="w-10 h-10 shrink-0 rounded-full bg-sky-500 hover:bg-sky-400 text-white shadow-md flex items-center justify-center active:scale-95 transition"
             aria-label="Send message"
           >
             <SendIcon className="w-4 h-4" />
@@ -383,8 +385,8 @@ export default function MessageInput({
             onClick={startRecording}
             disabled={uploading || !!editingMessage}
             className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition disabled:opacity-40 ${micDenied
-              ? "bg-red-500/15 text-red-500 border border-red-500/30"
-              : "bg-brand-gradient text-white shadow-glow"
+              ? "bg-rose-500/15 text-rose-500 border border-rose-500/30"
+              : "bg-sky-500 hover:bg-sky-400 text-white shadow-md"
               }`}
             aria-label="Record voice message"
             title={
