@@ -66,7 +66,7 @@ export default function Chat() {
     }
 
     function onDelete({ messageId, roomId }) {
-      if (roomId !== activeRoomId) return;
+      if (roomId && roomId !== activeRoomId) return;
       setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
     }
 
@@ -119,27 +119,48 @@ export default function Chat() {
     }
   }, [messages]);
 
-  // មុខងារផ្ញើសារ ឬ កែប្រែសារ
+  // មុខងារកែប្រែសារផ្ទាល់ (Inline Edit Direct Call)
+  function handleEditMessage(messageId, newContent) {
+    const socket = getSocket();
+    socket?.emit("edit_message", { messageId, content: newContent }, (ack) => {
+      if (!ack?.ok) {
+        alert(ack?.error || "Failed to edit message");
+      } else {
+        // Update UI ភ្លាមៗ locally
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent, isEdited: true } : msg))
+        );
+      }
+    });
+  }
+
+  // មុខងារលុបសារ
+  function handleDeleteMessage(messageId) {
+    if (!window.confirm("តើអ្នកពិតជាចង់លុបសារនេះមែនទេ?")) return;
+
+    const socket = getSocket();
+    socket?.emit("delete_message", { messageId, roomId: activeRoomId }, (ack) => {
+      if (!ack?.ok) {
+        alert(ack?.error || "Failed to delete message");
+      } else {
+        // Update UI ភ្លាមៗ locally
+        setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+      }
+    });
+  }
+
+  // មុខងារផ្ញើសារពី MessageInput Component
   function handleSendMessage(payload) {
     if (!activeRoomId) return;
     const socket = getSocket();
 
     if (payload.type === "edit") {
-      socket?.emit("edit_message", { messageId: payload.id, content: payload.content }, (ack) => {
-        if (!ack?.ok) alert(ack?.error || "Failed to edit message");
-      });
+      handleEditMessage(payload.id, payload.content);
     } else {
       socket?.emit("send_message", { roomId: activeRoomId, ...payload }, (ack) => {
         if (!ack?.ok) alert(ack?.error || "Failed to send message");
       });
     }
-  }
-
-  function handleDeleteMessage(messageId) {
-    const socket = getSocket();
-    socket?.emit("delete_message", { messageId, roomId: activeRoomId }, (ack) => {
-      if (!ack?.ok) alert(ack?.error || "Failed to delete message");
-    });
   }
 
   function handleTyping(isTyping) {
@@ -225,10 +246,7 @@ export default function Chat() {
                     setEditingMessage(null);
                     setReplyingTo(msg);
                   }}
-                  onEdit={(msg) => {
-                    setReplyingTo(null);
-                    setEditingMessage(msg);
-                  }}
+                  onEdit={(id, newContent) => handleEditMessage(id, newContent)}
                   onDelete={(id) => handleDeleteMessage(id)}
                 />
               ))}

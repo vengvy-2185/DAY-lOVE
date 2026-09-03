@@ -46,65 +46,74 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
   const [touchStartX, setTouchStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
 
-  const handleSaveEdit = () => {
+  const isMedia = message.type === "image" || message.type === "video";
+  const isVoice = message.type === "voice";
+
+  const handleSaveEdit = (e) => {
+    e.stopPropagation();
     if (!editText.trim()) return;
     onEdit?.(message.id, editText);
     setIsEditing(false);
   };
 
-  const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
+  const handleTouchStart = (e) => setTouchStartX(e.touches[0].clientX);
 
   const handleTouchMove = (e) => {
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - touchStartX;
-    if (diff > 0 && diff < 80) {
-      setTranslateX(diff);
-    }
+    const diff = e.touches[0].clientX - touchStartX;
+    if (diff > 0 && diff < 80) setTranslateX(diff);
   };
 
   const handleTouchEnd = () => {
-    if (translateX > 45) {
-      onReply?.(message);
-    }
+    if (translateX > 45) onReply?.(message);
     setTranslateX(0);
   };
 
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} px-2 sm:px-4 my-1.5 group animate-bubble-in`}>
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} px-2 sm:px-4 my-1 group animate-bubble-in`}>
       <div
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{ transform: `translateX(${translateX}px)` }}
-        className="relative flex items-center gap-1.5 max-w-[85%] sm:max-w-[70%] transition-transform duration-100 ease-out"
+        className="relative flex items-center gap-1.5 max-w-[85%] sm:max-w-[65%] transition-transform duration-100 ease-out"
       >
-        {/* Floating Action Bar */}
+        {/* Floating Action Menu - បន្ថែម e.stopPropagation() និង z-index */}
         <div
-          className={`hidden group-hover:flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-800/90 border border-slate-700/60 backdrop-blur-md shadow-md shrink-0 transition-all ${isOwn ? "order-first" : "order-last"
+          className={`z-10 hidden group-hover:flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-700/60 backdrop-blur-md shadow-md shrink-0 transition-all ${isOwn ? "order-first" : "order-last"
             }`}
         >
           <button
-            onClick={() => onReply?.(message)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onReply?.(message);
+            }}
             className="p-1 text-slate-400 hover:text-sky-400 rounded-full transition"
             title="Reply"
           >
             <ReplyIcon className="w-3.5 h-3.5" />
           </button>
+
           {isOwn && (
             <>
               {message.type === "text" && (
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditText(message.content || "");
+                    setIsEditing(true);
+                  }}
                   className="p-1 text-slate-400 hover:text-amber-400 rounded-full transition"
                   title="Edit"
                 >
                   <EditIcon className="w-3.5 h-3.5" />
                 </button>
               )}
+
               <button
-                onClick={() => onDelete?.(message.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(message.id);
+                }}
                 className="p-1 text-slate-400 hover:text-rose-400 rounded-full transition"
                 title="Delete"
               >
@@ -114,52 +123,61 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
           )}
         </div>
 
-        {/* Message Bubble Base */}
+        {/* Message Bubble Container - លុប border ធំជុំវិញ Media & Voice */}
         <div
-          className={`w-full rounded-2xl px-3.5 py-2.5 shadow-sm transition-all duration-200 ${isOwn
-            ? "bg-indigo-600/90 text-white rounded-br-xs border border-indigo-500/30"
-            : "bg-slate-800/90 text-slate-100 rounded-bl-xs border border-slate-700/50"
+          className={`relative overflow-hidden transition-all duration-200 ${isMedia
+            ? "p-0 rounded-2xl border-0 bg-transparent shadow-none"
+            : isVoice
+              ? "p-2 rounded-2xl border border-slate-700/40 w-fit"
+              : "px-3.5 py-2 rounded-2xl w-fit shadow-sm"
+            } ${!isMedia &&
+            (isOwn
+              ? "bg-slate-800 text-white rounded-br-xs border-slate-700/60"
+              : "bg-slate-900 text-slate-100 rounded-bl-xs border-slate-800")
             }`}
         >
           {/* Sender Name */}
-          {!isOwn && message.sender?.name && (
+          {!isOwn && message.sender?.name && !isMedia && (
             <div className="text-[11.5px] font-semibold text-sky-400 mb-1 tracking-wide">
               {message.sender.name}
             </div>
           )}
 
-          {/* Telegram Quote Box Standard */}
+          {/* Telegram Quote Box */}
           {message.replyTo && (
-            <div className="mb-2 pl-2.5 py-1 pr-2 rounded-r-lg bg-black/20 border-l-[3px] border-sky-400 flex flex-col gap-0.5">
-              <span className="text-[11px] font-bold text-sky-300 tracking-wide">
+            <div className={`mb-1.5 pl-2 py-0.5 pr-2 rounded-r bg-black/20 border-l-[3px] border-sky-400 flex flex-col ${isMedia ? "m-2" : ""}`}>
+              <span className="text-[10.5px] font-bold text-sky-300">
                 {message.replyTo.sender?.name || "User"}
               </span>
-              <span className="text-[12px] text-slate-200 line-clamp-1 opacity-90 font-normal">
+              <span className="text-[11.5px] text-slate-200 line-clamp-1 opacity-90">
                 {message.replyTo.content || `[${message.replyTo.type}]`}
               </span>
             </div>
           )}
 
-          {/* Edit / View Mode */}
+          {/* Content Rendering */}
           {isEditing ? (
-            <div className="flex flex-col gap-2 my-1">
+            <div className="flex flex-col gap-2 my-1 min-w-[200px]">
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full p-2 bg-slate-900 border border-indigo-400/50 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none"
+                className="w-full p-2 bg-slate-950 border border-sky-500/50 rounded-xl text-sm text-white focus:outline-none resize-none"
                 rows={2}
                 autoFocus
               />
               <div className="flex justify-end gap-1.5 text-xs">
                 <button
-                  onClick={() => setIsEditing(false)}
-                  className="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(false);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-700 text-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium transition shadow-sm"
+                  className="px-2.5 py-1 rounded-lg bg-sky-500 text-white font-medium"
                 >
                   Save
                 </button>
@@ -168,18 +186,40 @@ export default function ChatBubble({ message, isOwn, isRead, onReply, onEdit, on
           ) : (
             <>
               {message.type === "text" && (
-                <p className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed">
+                <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
                   {message.content}
                 </p>
               )}
-              {message.type === "image" && <ImagePreview src={message.mediaUrl} />}
-              {message.type === "video" && <VideoPlayer src={message.mediaUrl} />}
-              {message.type === "voice" && <VoicePlayer src={message.mediaUrl} />}
+
+              {/* រូបភាព / វីដេអូ លាតពេញ ១០០% គ្មាន Border ព័ទ្ធជុំវិញ */}
+              {message.type === "image" && (
+                <div className="relative overflow-hidden rounded-2xl max-w-[280px] sm:max-w-[320px]">
+                  <ImagePreview src={message.mediaUrl} />
+                </div>
+              )}
+
+              {message.type === "video" && (
+                <div className="relative overflow-hidden rounded-2xl max-w-[280px] sm:max-w-[320px]">
+                  <VideoPlayer src={message.mediaUrl} />
+                </div>
+              )}
+
+              {/* Voice Player ប៉ុនទំហំសំឡេង */}
+              {message.type === "voice" && (
+                <div className="w-fit min-w-[200px] max-w-[260px]">
+                  <VoicePlayer src={message.mediaUrl} />
+                </div>
+              )}
             </>
           )}
 
-          {/* Footer Info */}
-          <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-slate-300/80">
+          {/* Time & Status Overlay */}
+          <div
+            className={`flex items-center justify-end gap-1 text-[10px] ${isMedia
+              ? "absolute bottom-1.5 right-2 px-1.5 py-0.5 rounded-md bg-black/60 text-white/90 backdrop-blur-xs"
+              : "mt-1 text-slate-400"
+              }`}
+          >
             {message.isEdited && <span className="italic opacity-80">edited</span>}
             <span>
               {new Date(message.createdAt).toLocaleTimeString([], {
