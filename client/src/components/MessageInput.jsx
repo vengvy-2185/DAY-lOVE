@@ -45,13 +45,20 @@ function CheckIcon(props) {
   );
 }
 
+function CloseIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 function formatDuration(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// Pick a mime type the browser's MediaRecorder can actually produce.
 function pickRecorderMime() {
   const candidates = [
     "audio/webm;codecs=opus",
@@ -65,7 +72,13 @@ function pickRecorderMime() {
   return "";
 }
 
-export default function MessageInput({ onSend, onTyping }) {
+export default function MessageInput({
+  onSend,
+  onTyping,
+  replyingTo,
+  editingMessage,
+  onCancelAction,
+}) {
   const [text, setText] = useState("");
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -82,8 +95,18 @@ export default function MessageInput({ onSend, onTyping }) {
   const timerRef = useRef(null);
   const cancelledRef = useRef(false);
 
+  // Sync state ពេលចុច Edit ឬ Reply
   useEffect(() => {
-    // Auto-grow the textarea up to a sane max height.
+    if (editingMessage) {
+      setText(editingMessage.content || "");
+      textareaRef.current?.focus();
+    } else if (replyingTo) {
+      textareaRef.current?.focus();
+    }
+  }, [editingMessage, replyingTo]);
+
+  // Auto-grow textarea height
+  useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
@@ -108,8 +131,19 @@ export default function MessageInput({ onSend, onTyping }) {
   function submitText() {
     const trimmed = text.trim();
     if (!trimmed) return;
-    onSend({ type: "text", content: trimmed });
+
+    if (editingMessage) {
+      onSend({ type: "edit", id: editingMessage.id, content: trimmed });
+    } else {
+      onSend({
+        type: "text",
+        content: trimmed,
+        replyToId: replyingTo ? replyingTo.id : null,
+      });
+    }
+
     setText("");
+    onCancelAction?.();
     onTyping?.(false);
   }
 
@@ -121,7 +155,12 @@ export default function MessageInput({ onSend, onTyping }) {
       const { data } = await api.post("/upload", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      onSend({ type: data.type, mediaUrl: data.url });
+      onSend({
+        type: data.type,
+        mediaUrl: data.url,
+        replyToId: replyingTo ? replyingTo.id : null,
+      });
+      onCancelAction?.();
     } catch (err) {
       alert(err.response?.data?.error || "Upload failed");
     } finally {
@@ -221,76 +260,110 @@ export default function MessageInput({ onSend, onTyping }) {
   }
 
   return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
-      className={`p-3 border-t border-base-700/60 surface-panel flex items-end gap-2 transition-colors ${
-        dragging ? "bg-accent/10" : ""
-      }`}
-    >
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className="w-10 h-10 shrink-0 rounded-full surface-raised border flex items-center justify-center hover:opacity-80 active:scale-95 transition text-muted"
-        aria-label="Attach file"
-        disabled={uploading}
-      >
-        <PaperclipIcon width={18} height={18} />
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*,audio/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) uploadFile(file);
-          e.target.value = "";
-        }}
-      />
-
-      <textarea
-        ref={textareaRef}
-        value={text}
-        onChange={handleTextChange}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submitText();
-          }
-        }}
-        rows={1}
-        placeholder={dragging ? "Drop file to send…" : uploading ? "Uploading…" : "Message"}
-        disabled={uploading}
-        className="flex-1 resize-none surface-raised border rounded-2xl px-4 py-2.5 text-[15px] leading-6 outline-none focus:ring-2 focus:ring-accent/50 transition max-h-32 placeholder:text-muted disabled:opacity-60"
-      />
-
-      {text.trim() ? (
-        <button
-          onClick={submitText}
-          className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
-          aria-label="Send message"
-        >
-          <SendIcon width={18} height={18} />
-        </button>
-      ) : (
-        <button
-          onClick={startRecording}
-          disabled={uploading}
-          className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition disabled:opacity-40 ${
-            micDenied
-              ? "bg-red-500/15 text-red-500 border border-red-500/30"
-              : "bg-brand-gradient text-white shadow-glow"
-          }`}
-          aria-label="Record voice message"
-          title={micDenied ? "Microphone access denied — check browser permissions" : "Record voice message"}
-        >
-          <MicIcon width={18} height={18} />
-        </button>
+    <div className="flex flex-col w-full">
+      {/* Banner បង្ហាញ preview ពេលកំពុង Reply ឬ Edit */}
+      {(replyingTo || editingMessage) && (
+        <div className="flex items-center justify-between px-4 py-2 border-t border-x border-base-700/60 bg-base-800/80 rounded-t-2xl text-xs backdrop-blur-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-accent font-semibold shrink-0">
+              {editingMessage ? "✏️ Editing Message" : `↩️ Replying to ${replyingTo?.sender?.name || "User"}`}
+            </span>
+            <span className="text-muted truncate max-w-[200px] sm:max-w-[400px]">
+              {editingMessage ? editingMessage.content : replyingTo?.content || `[${replyingTo?.type}]`}
+            </span>
+          </div>
+          <button
+            onClick={onCancelAction}
+            className="p-1 text-muted hover:text-white rounded-full transition shrink-0"
+            aria-label="Cancel action"
+          >
+            <CloseIcon width={14} height={14} />
+          </button>
+        </div>
       )}
+
+      {/* Main Form Box */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={`p-3 border-t border-base-700/60 surface-panel flex items-end gap-2 transition-colors ${dragging ? "bg-accent/10" : ""
+          } ${replyingTo || editingMessage ? "rounded-b-2xl border-t-0" : ""}`}
+      >
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-10 h-10 shrink-0 rounded-full surface-raised border flex items-center justify-center hover:opacity-80 active:scale-95 transition text-muted"
+          aria-label="Attach file"
+          disabled={uploading || !!editingMessage}
+        >
+          <PaperclipIcon width={18} height={18} />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*,audio/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadFile(file);
+            e.target.value = "";
+          }}
+        />
+
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={handleTextChange}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submitText();
+            }
+          }}
+          rows={1}
+          placeholder={
+            dragging
+              ? "Drop file to send…"
+              : uploading
+                ? "Uploading…"
+                : editingMessage
+                  ? "Edit message..."
+                  : "Message"
+          }
+          disabled={uploading}
+          className="flex-1 resize-none surface-raised border rounded-2xl px-4 py-2.5 text-[15px] leading-6 outline-none focus:ring-2 focus:ring-accent/50 transition max-h-32 placeholder:text-muted disabled:opacity-60"
+        />
+
+        {text.trim() ? (
+          <button
+            onClick={submitText}
+            className="w-10 h-10 shrink-0 rounded-full bg-brand-gradient text-white shadow-glow flex items-center justify-center active:scale-95 transition"
+            aria-label="Send message"
+          >
+            <SendIcon width={18} height={18} />
+          </button>
+        ) : (
+          <button
+            onClick={startRecording}
+            disabled={uploading || !!editingMessage}
+            className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition disabled:opacity-40 ${micDenied
+                ? "bg-red-500/15 text-red-500 border border-red-500/30"
+                : "bg-brand-gradient text-white shadow-glow"
+              }`}
+            aria-label="Record voice message"
+            title={
+              micDenied
+                ? "Microphone access denied — check browser permissions"
+                : "Record voice message"
+            }
+          >
+            <MicIcon width={18} height={18} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

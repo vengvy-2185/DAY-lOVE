@@ -40,6 +40,14 @@ function SearchIcon(props) {
   );
 }
 
+function PlusIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 const AVATAR_TONES = [
   "from-accent to-accent2",
   "from-pink-500 to-accent",
@@ -53,7 +61,7 @@ function toneForName(name = "") {
   return AVATAR_TONES[sum % AVATAR_TONES.length];
 }
 
-export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoom, onDeleteRoom }) {
+export default function Sidebar({ rooms = [], activeRoomId, onSelectRoom, onCreateRoom, onDeleteRoom }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -83,40 +91,42 @@ export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoo
   }
 
   return (
-    <aside className="w-full sm:w-80 shrink-0 surface-panel border-r flex flex-col h-full safe-top">
-      {/* Header */}
-      <div className="relative bg-brand-gradient px-4 pt-5 pb-6 sm:rounded-tr-3xl overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-8 -left-6 w-24 h-24 rounded-full bg-black/10 blur-xl" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center font-bold text-white text-lg shadow-glow">
-              {user?.name?.[0]?.toUpperCase() || "D"}
+    <aside className="w-full sm:w-80 shrink-0 surface-panel border-r border-base-700/60 flex flex-col h-full safe-top select-none">
+      {/* Header Profile Section */}
+      <div className="relative bg-brand-gradient px-4 pt-5 pb-6 overflow-hidden shadow-sm">
+        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-8 -left-6 w-24 h-24 rounded-full bg-black/10 blur-xl pointer-events-none" />
+        <div className="relative flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-white text-lg shadow-glow shrink-0 border border-white/20">
+              {user?.name?.[0]?.toUpperCase() || "U"}
             </div>
-            <div>
-              <div className="font-semibold text-white leading-tight">Day Life</div>
-              <div className="text-xs text-white/80 leading-tight">{user?.name}</div>
+            <div className="min-w-0">
+              <div className="font-semibold text-white leading-tight truncate">Day Life</div>
+              <div className="text-xs text-white/80 leading-tight truncate">{user?.name || "User"}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white flex items-center justify-center"
+              title="Toggle Theme"
+              className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white flex items-center justify-center backdrop-blur-sm"
             >
-              {theme === "dark" ? <SunIcon width={18} height={18} /> : <MoonIcon width={18} height={18} />}
+              {theme === "dark" ? <SunIcon width={16} height={16} /> : <MoonIcon width={16} height={16} />}
             </button>
             {user?.isAdmin && (
               <button
                 onClick={() => navigate("/admin")}
-                className="text-xs px-2.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white font-medium"
+                className="text-xs px-2.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white font-medium backdrop-blur-sm"
               >
                 Admin
               </button>
             )}
             <button
               onClick={logout}
-              className="text-xs px-2.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white font-medium"
+              className="text-xs px-2.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white font-medium backdrop-blur-sm"
             >
               Logout
             </button>
@@ -124,25 +134,27 @@ export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoo
         </div>
       </div>
 
-      {/* New conversation */}
+      {/* New conversation Box */}
       <div className="p-3 flex gap-2 border-b border-base-700/60">
         <input
           value={newRoomName}
           onChange={(e) => setNewRoomName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           placeholder="New conversation name"
-          className="flex-1 surface-raised border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/50 transition placeholder:text-muted"
+          className="flex-1 surface-raised border rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/50 transition placeholder:text-muted"
         />
         <button
           onClick={handleCreate}
-          className="text-sm px-4 py-2 rounded-xl bg-brand-gradient text-white font-semibold shadow-glow hover:opacity-90 active:scale-95 transition"
+          disabled={!newRoomName.trim()}
+          className="w-10 h-10 rounded-xl bg-brand-gradient text-white flex items-center justify-center shadow-glow hover:opacity-90 active:scale-95 transition disabled:opacity-50 shrink-0"
+          title="Create Room"
         >
-          +
+          <PlusIcon width={18} height={18} />
         </button>
       </div>
 
-      {/* Search */}
-      {rooms.length > 4 && (
+      {/* Search Input Box */}
+      {rooms.length > 3 && (
         <div className="px-3 pt-3">
           <div className="relative">
             <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -162,51 +174,52 @@ export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoo
           const isActive = activeRoomId === room.id;
           const isConfirming = confirmingId === room.id;
           return (
-            <button
+            <div
               key={room.id}
               onClick={() => onSelectRoom(room.id)}
-              onBlur={() => confirmingId === room.id && setConfirmingId(null)}
-              className={`group w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-center gap-3 ${
-                isActive
-                  ? "bg-brand-gradient-soft border-accent/40 shadow-glow"
-                  : "border-transparent surface-hover"
-              }`}
+              className={`group w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-center gap-3 cursor-pointer ${isActive
+                ? "bg-brand-gradient-soft border-accent/40 shadow-glow"
+                : "border-transparent surface-hover"
+                }`}
             >
               <div
-                className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${toneForName(room.name)} flex items-center justify-center text-white font-semibold text-sm`}
+                className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${toneForName(
+                  room.name
+                )} flex items-center justify-center text-white font-semibold text-sm shadow-sm`}
               >
                 {room.name?.[0]?.toUpperCase() || "#"}
               </div>
               <div className="min-w-0 flex-1">
-                <div className={`font-medium text-sm truncate ${isActive ? "text-accent" : ""}`}>
+                <div className={`font-medium text-sm truncate ${isActive ? "text-accent font-semibold" : ""}`}>
                   {room.name}
                 </div>
                 <div className="text-xs text-muted truncate">Tap to open</div>
               </div>
+
               {onDeleteRoom && (
-                <span
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   onClick={(e) => handleDeleteClick(e, room.id)}
-                  onKeyDown={(e) => e.key === "Enter" && handleDeleteClick(e, room.id)}
-                  className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition ${
-                    isConfirming
-                      ? "bg-red-500 text-white"
-                      : "text-muted hover:bg-red-500/10 hover:text-red-500"
-                  }`}
+                  onBlur={() => setTimeout(() => setConfirmingId(null), 200)}
+                  className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition ${isConfirming
+                    ? "bg-red-500 text-white animate-pulse"
+                    : "text-muted hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    }`}
                   title={isConfirming ? "Tap again to confirm delete" : "Delete conversation"}
                 >
                   <TrashIcon width={15} height={15} />
-                </span>
+                </button>
               )}
-            </button>
+            </div>
           );
         })}
+
         {filteredRooms.length === 0 && rooms.length > 0 && (
           <div className="p-4 text-sm text-muted text-center">No matching conversations.</div>
         )}
+
         {rooms.length === 0 && (
-          <div className="p-6 text-sm text-muted text-center">
+          <div className="p-6 text-sm text-muted text-center leading-relaxed">
             No conversations yet.
             <br />
             Create one above to get started.

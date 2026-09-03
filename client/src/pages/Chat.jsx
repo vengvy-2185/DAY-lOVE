@@ -23,14 +23,14 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
   const [peerOnline, setPeerOnline] = useState(false);
-  const [mobileView, setMobileView] = useState("list"); // "list" | "chat" — mobile-only
+  const [mobileView, setMobileView] = useState("list"); // "list" | "chat"
   const scrollRef = useRef(null);
 
   useEffect(() => {
     api.get("/rooms").then(({ data }) => {
       setRooms(data);
       if (data[0]) setActiveRoomId(data[0].id);
-    });
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -38,19 +38,24 @@ export default function Chat() {
     const socket = getSocket();
     socket?.emit("join_room", activeRoomId);
 
-    api.get(`/messages/${activeRoomId}`).then(({ data }) => setMessages(data));
+    api.get(`/messages/${activeRoomId}`)
+      .then(({ data }) => setMessages(data))
+      .catch(console.error);
+
     setTypingUsers([]);
 
     function onReceive(message) {
       if (message.roomId !== activeRoomId) return;
       setMessages((prev) => [...prev, message]);
     }
+
     function onTyping({ roomId, name, isTyping }) {
       if (roomId !== activeRoomId) return;
       setTypingUsers((prev) =>
         isTyping ? Array.from(new Set([...prev, name])) : prev.filter((n) => n !== name)
       );
     }
+
     function onOnline({ online }) {
       setPeerOnline(online);
     }
@@ -67,7 +72,7 @@ export default function Chat() {
     };
   }, [activeRoomId]);
 
-  // Keep the room list in sync if a room is deleted elsewhere (e.g. another device/tab).
+  // Sync state ពេលរងការលុប Room ពី Device ផ្សេង
   useEffect(() => {
     const socket = getSocket();
     function onRoomDeleted({ roomId }) {
@@ -82,10 +87,14 @@ export default function Chat() {
     return () => socket?.off("room_deleted", onRoomDeleted);
   }, []);
 
+  // Auto-scroll ទៅបាតក្រោមបង្អស់ពេលមានសារថ្មី
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages]);
 
+  // មុខងារផ្ញើសារ (Text ឬ Media ដូចជា Image, Video, Voice)
   function sendMessage(payload) {
     if (!activeRoomId) return;
     const socket = getSocket();
@@ -100,9 +109,13 @@ export default function Chat() {
   }
 
   async function createRoom(name) {
-    const { data } = await api.post("/rooms", { name });
-    setRooms((prev) => [data, ...prev]);
-    selectRoom(data.id);
+    try {
+      const { data } = await api.post("/rooms", { name });
+      setRooms((prev) => [data, ...prev]);
+      selectRoom(data.id);
+    } catch (err) {
+      alert("Failed to create room");
+    }
   }
 
   async function deleteRoom(roomId) {
@@ -115,7 +128,6 @@ export default function Chat() {
     try {
       await api.delete(`/rooms/${roomId}`);
     } catch (err) {
-      // roll back on failure
       setRooms(previousRooms);
       alert("Failed to delete conversation. Please try again.");
     }
@@ -129,8 +141,9 @@ export default function Chat() {
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      <div className={`${mobileView === "chat" ? "hidden" : "flex"} sm:flex h-full`}>
+    <div className="h-screen flex overflow-hidden bg-base-900 text-base-100">
+      {/* Sidebar List */}
+      <div className={`${mobileView === "chat" ? "hidden" : "flex"} sm:flex h-full w-full sm:w-80 shrink-0 border-r border-base-700/60`}>
         <Sidebar
           rooms={rooms}
           activeRoomId={activeRoomId}
@@ -140,10 +153,12 @@ export default function Chat() {
         />
       </div>
 
-      <div className={`${mobileView === "list" ? "hidden" : "flex"} sm:flex flex-1 flex-col min-w-0`}>
+      {/* Main Chat Panel */}
+      <div className={`${mobileView === "list" ? "hidden" : "flex"} sm:flex flex-1 flex-col min-w-0 h-full`}>
         {activeRoom ? (
           <>
-            <div className="px-3 sm:px-4 py-3 border-b border-base-700/60 surface-panel flex items-center justify-between gap-2 safe-top">
+            {/* Header */}
+            <div className="px-3 sm:px-4 py-3 border-b border-base-700/60 surface-panel flex items-center justify-between gap-2 safe-top shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <button
                   onClick={() => setMobileView("list")}
@@ -153,27 +168,32 @@ export default function Chat() {
                   <BackIcon width={18} height={18} />
                 </button>
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{activeRoom.name}</div>
+                  <div className="font-medium truncate text-sm sm:text-base">{activeRoom.name}</div>
                   <div className="text-xs text-muted sm:hidden">{peerOnline ? "Online" : "Offline"}</div>
                 </div>
               </div>
               <OnlineStatus online={peerOnline} />
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 px-1 sm:px-0">
+            {/* Messages Body */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 px-2 sm:px-4 space-y-3">
               {messages.map((m) => (
-                <ChatBubble key={m.id} message={m} isOwn={m.senderId === user.id} />
+                <ChatBubble key={m.id} message={m} isOwn={m.senderId === user?.id} />
               ))}
             </div>
 
+            {/* Typing Indicator */}
             <TypingIndicator names={typingUsers} />
-            <div className="safe-bottom">
+
+            {/* Input Footer */}
+            <div className="safe-bottom p-2 sm:p-3 border-t border-base-700/60 bg-base-900 shrink-0">
               <MessageInput onSend={sendMessage} onTyping={handleTyping} />
             </div>
           </>
         ) : (
+          /* Placeholder ពេលមិនទាន់ជ្រើស Room */
           <div className="flex-1 flex flex-col items-center justify-center text-muted text-sm gap-3 px-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-brand-gradient-soft flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 rounded-2xl bg-brand-gradient-soft flex items-center justify-center text-3xl shadow-lg">
               💬
             </div>
             <div>Select or create a conversation to get started.</div>

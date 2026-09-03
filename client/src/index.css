@@ -2,102 +2,171 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
-  height: 100%;
+@layer base {
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-base-950 text-slate-100 antialiased transition-colors duration-300 font-sans selection:bg-accent/30 selection:text-accent;
+  }
+
+  html.light body {
+    @apply bg-slate-50 text-slate-800;
+  }
 }
 
-html {
-  color-scheme: dark;
-}
-html.light {
-  color-scheme: light;
-}
-
-body {
-  @apply bg-base-950 text-slate-100 antialiased transition-colors duration-300;
-}
-html.light body {
-  @apply bg-base-100 text-slate-800;
-}
-
-/* Custom app surfaces that shift with the theme */
+/* Custom app surfaces that shift with theme */
 .surface-panel {
-  @apply bg-base-900 border-base-700;
+  @apply bg-base-900/90 border-base-700/60 backdrop-blur-md;
 }
+
 html.light .surface-panel {
-  @apply bg-white border-slate-200;
+  @apply bg-white/90 border-slate-200/80 backdrop-blur-md;
 }
 
 .surface-raised {
-  @apply bg-base-800 border-base-700;
+  @apply bg-base-800/80 border-base-700/60;
 }
+
 html.light .surface-raised {
-  @apply bg-slate-100 border-slate-200;
+  @apply bg-slate-100/80 border-slate-200/80;
+}
+
+.surface-hover {
+  @apply transition-colors duration-150;
 }
 
 .surface-hover:hover {
-  @apply bg-base-800;
+  @apply bg-base-800/60;
 }
+
 html.light .surface-hover:hover {
-  @apply bg-slate-100;
+  @apply bg-slate-100/80;
 }
 
 .text-muted {
   @apply text-slate-400;
 }
+
 html.light .text-muted {
   @apply text-slate-500;
 }
 
+/* Modern & Minimal Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
-  @apply bg-base-700 rounded-full;
+  @apply bg-base-700/60 rounded-full hover:bg-base-600 transition;
 }
+
 html.light ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300;
+  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Smooth theme + safe-area handling for phones */
+/* Safe-area handling for mobile devices */
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
 .safe-top {
   padding-top: env(safe-area-inset-top);
 }
+
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Voice recording live waveform bars */
-@keyframes recording-bar {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
-}
-.animate-recording-bar {
-  transform-origin: bottom;
-  animation: recording-bar 0.9s ease-in-out infinite;
+/* Gradient & Glow Helpers */
+.shadow-glow {
+  box-shadow: 0 0 20px -5px rgba(var(--accent-rgb, 99, 102, 241), 0.25);
 }
 
-/* Subtle pulse on the currently-playing voice-message bar */
-@keyframes pulse-bar {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Animations */
+@keyframes recording-bar {
+
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
 }
+
+.animate-recording-bar {
+  transform-origin: bottom;
+  animation: recording-bar 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-bar {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scaleY(0.85);
+  }
+}
+
 .animate-pulse-bar {
   animation: pulse-bar 0.6s ease-in-out infinite;
 }
 
-/* New chat bubbles ease in instead of popping in abruptly */
 @keyframes bubble-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
+
 .animate-bubble-in {
-  animation: bubble-in 0.22s ease-out;
+  animation: bubble-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
