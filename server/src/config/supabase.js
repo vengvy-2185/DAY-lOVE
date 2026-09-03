@@ -18,6 +18,6 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // 3. កំណត់ BUCKET ឈ្មោះ "day-life-media" (ឬតាម Env)
-const BUCKET = process.env.SUPABASE_BUCKET || "day-life-media";
+const BUCKET = process.env.SUPABASE_BUCKET || "uploads";
 
 module.exports = { supabase, BUCKET };
