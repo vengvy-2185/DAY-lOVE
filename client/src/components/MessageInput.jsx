@@ -76,7 +76,7 @@ function ReplyIcon(props) {
   );
 }
 
-// --- Main MessageInput Component ---
+// --- Helper Functions ---
 
 function formatDuration(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -97,12 +97,14 @@ function pickRecorderMime() {
   return "";
 }
 
+// --- Main Component with Safe Props Defaults ---
+
 export default function MessageInput({
-  onSend,
-  onTyping,
-  replyingTo,
-  editingMessage,
-  onCancelAction,
+  onSend = () => { },
+  onTyping = () => { },
+  replyingTo = null,
+  editingMessage = null,
+  onCancelAction = () => { },
 }) {
   const [text, setText] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -156,9 +158,9 @@ export default function MessageInput({
     if (!trimmed) return;
 
     if (editingMessage) {
-      onSend({ type: "edit", id: editingMessage.id, content: trimmed });
+      onSend?.({ type: "edit", id: editingMessage.id, content: trimmed });
     } else {
-      onSend({
+      onSend?.({
         type: "text",
         content: trimmed,
         replyToId: replyingTo ? replyingTo.id : null,
@@ -178,7 +180,7 @@ export default function MessageInput({
       const { data } = await api.post("/upload", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      onSend({
+      onSend?.({
         type: data.type,
         mediaUrl: data.url,
         replyToId: replyingTo ? replyingTo.id : null,
@@ -284,7 +286,7 @@ export default function MessageInput({
 
   return (
     <div className="flex flex-col w-full">
-      {/* Banner Preview ពេលកំពុង Reply ឬ Edit (ជំនួស Emoji ដោយ SVG Icon) */}
+      {/* Banner Preview ពេល Reply ឬ Edit */}
       {(replyingTo || editingMessage) && (
         <div className="flex items-center justify-between px-4 py-2 border-t border-x border-base-700/60 bg-base-800/80 rounded-t-2xl text-xs backdrop-blur-sm">
           <div className="flex items-center gap-2 min-w-0">
@@ -304,7 +306,7 @@ export default function MessageInput({
             </span>
           </div>
           <button
-            onClick={onCancelAction}
+            onClick={() => onCancelAction?.()}
             className="p-1 text-muted hover:text-white rounded-full transition shrink-0"
             aria-label="Cancel action"
           >

@@ -24,13 +24,20 @@ export default function Chat() {
   const [typingUsers, setTypingUsers] = useState([]);
   const [peerOnline, setPeerOnline] = useState(false);
   const [mobileView, setMobileView] = useState("list"); // "list" | "chat"
+
+  // Action States សម្រាប់ Reply និង Edit
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    api.get("/rooms").then(({ data }) => {
-      setRooms(data);
-      if (data[0]) setActiveRoomId(data[0].id);
-    }).catch(console.error);
+    api.get("/rooms")
+      .then(({ data }) => {
+        setRooms(data);
+        if (data[0]) setActiveRoomId(data[0].id);
+      })
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -43,10 +50,24 @@ export default function Chat() {
       .catch(console.error);
 
     setTypingUsers([]);
+    setReplyingTo(null);
+    setEditingMessage(null);
 
     function onReceive(message) {
       if (message.roomId !== activeRoomId) return;
       setMessages((prev) => [...prev, message]);
+    }
+
+    function onUpdate(updatedMsg) {
+      if (updatedMsg.roomId !== activeRoomId) return;
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === updatedMsg.id ? updatedMsg : msg))
+      );
+    }
+
+    function onDelete({ messageId, roomId }) {
+      if (roomId !== activeRoomId) return;
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
     }
 
     function onTyping({ roomId, name, isTyping }) {
@@ -61,12 +82,16 @@ export default function Chat() {
     }
 
     socket?.on("receive_message", onReceive);
+    socket?.on("message_updated", onUpdate);
+    socket?.on("message_deleted", onDelete);
     socket?.on("typing", onTyping);
     socket?.on("online", onOnline);
 
     return () => {
       socket?.emit("leave_room", activeRoomId);
       socket?.off("receive_message", onReceive);
+      socket?.off("message_updated", onUpdate);
+      socket?.off("message_deleted", onDelete);
       socket?.off("typing", onTyping);
       socket?.off("online", onOnline);
     };
@@ -94,12 +119,26 @@ export default function Chat() {
     }
   }, [messages]);
 
-  // មុខងារផ្ញើសារ (Text ឬ Media ដូចជា Image, Video, Voice)
-  function sendMessage(payload) {
+  // មុខងារផ្ញើសារ ឬ កែប្រែសារ
+  function handleSendMessage(payload) {
     if (!activeRoomId) return;
     const socket = getSocket();
-    socket?.emit("send_message", { roomId: activeRoomId, ...payload }, (ack) => {
-      if (!ack?.ok) alert(ack?.error || "Failed to send message");
+
+    if (payload.type === "edit") {
+      socket?.emit("edit_message", { messageId: payload.id, content: payload.content }, (ack) => {
+        if (!ack?.ok) alert(ack?.error || "Failed to edit message");
+      });
+    } else {
+      socket?.emit("send_message", { roomId: activeRoomId, ...payload }, (ack) => {
+        if (!ack?.ok) alert(ack?.error || "Failed to send message");
+      });
+    }
+  }
+
+  function handleDeleteMessage(messageId) {
+    const socket = getSocket();
+    socket?.emit("delete_message", { messageId, roomId: activeRoomId }, (ack) => {
+      if (!ack?.ok) alert(ack?.error || "Failed to delete message");
     });
   }
 
@@ -178,7 +217,20 @@ export default function Chat() {
             {/* Messages Body */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 px-2 sm:px-4 space-y-3">
               {messages.map((m) => (
-                <ChatBubble key={m.id} message={m} isOwn={m.senderId === user?.id} />
+                <ChatBubble
+                  key={m.id}
+                  message={m}
+                  isOwn={m.senderId === user?.id}
+                  onReply={(msg) => {
+                    setEditingMessage(null);
+                    setReplyingTo(msg);
+                  }}
+                  onEdit={(msg) => {
+                    setReplyingTo(null);
+                    setEditingMessage(msg);
+                  }}
+                  onDelete={(id) => handleDeleteMessage(id)}
+                />
               ))}
             </div>
 
@@ -187,7 +239,16 @@ export default function Chat() {
 
             {/* Input Footer */}
             <div className="safe-bottom p-2 sm:p-3 border-t border-base-700/60 bg-base-900 shrink-0">
-              <MessageInput onSend={sendMessage} onTyping={handleTyping} />
+              <MessageInput
+                onSend={handleSendMessage}
+                onTyping={handleTyping}
+                replyingTo={replyingTo}
+                editingMessage={editingMessage}
+                onCancelAction={() => {
+                  setReplyingTo(null);
+                  setEditingMessage(null);
+                }}
+              />
             </div>
           </>
         ) : (
